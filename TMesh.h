@@ -15,7 +15,9 @@ public:
 	int VertsN;
 	unsigned int *Tris;
 	int TrisN;
-	TMesh() : OnFlag(1), Verts(nullptr), Colors(nullptr), Normals(nullptr), VertsN(0), Tris(nullptr), TrisN(0) {}
+	TMesh() : OnFlag(1), Verts(nullptr), Colors(nullptr), Normals(nullptr), VertsN(0), Tris(nullptr), TrisN(0)
+	{}
+	void RecalculateBoundingBox();
 	void SetToCube(V3 cc, float sideLength, unsigned int color0, unsigned int color1);
 	void Allocate(int vertsN, int trisN);
 	void DrawCubeQuadFaces(FrameBuffer *fb, PPC *ppc, unsigned int color);

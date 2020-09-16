@@ -41,8 +41,8 @@ Scene::Scene() {
 	tmeshes[0].SetToCube(cc, sideLength, 0xFF0000FF, 0xFF000000);
 	tmeshes[0].OnFlag = 0;
 
-//	tmeshes[1].LoadBin("geometry/teapot1K.bin");
-	tmeshes[1].LoadBin("geometry/teapot57K.bin");
+	tmeshes[1].LoadBin("geometry/teapot1K.bin");
+	//tmeshes[1].LoadBin("geometry/teapot57K.bin");
 	tmeshes[1].SetCenter(V3(0.0f, 0.0f, -140.0f));
 
 	Render();

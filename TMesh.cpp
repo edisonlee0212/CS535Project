@@ -18,6 +18,21 @@ void TMesh::Allocate(int vertsN, int trisN) {
 	Tris = new unsigned int[TrisN * 3];
 }
 
+void TMesh::RecalculateBoundingBox()
+{
+	BoundingBox.MaxBound = V3(-999999, -999999, -999999);
+	BoundingBox.MinBound = V3(999999, 999999, 999999);
+	for (int i = 0; i < VertsN; i++)
+	{
+		if (BoundingBox.MaxBound[0] < Verts[i][0]) BoundingBox.MaxBound[0] = Verts[i][0];
+		if (BoundingBox.MaxBound[1] < Verts[i][1]) BoundingBox.MaxBound[1] = Verts[i][1];
+		if (BoundingBox.MaxBound[2] < Verts[i][2]) BoundingBox.MaxBound[2] = Verts[i][2];
+		if (BoundingBox.MinBound[0] > Verts[i][0]) BoundingBox.MinBound[0] = Verts[i][0];
+		if (BoundingBox.MinBound[1] > Verts[i][1]) BoundingBox.MinBound[1] = Verts[i][1];
+		if (BoundingBox.MinBound[2] > Verts[i][2]) BoundingBox.MinBound[2] = Verts[i][2];
+	}
+}
+
 void TMesh::SetToCube(V3 cc, float sideLength, unsigned int color0, unsigned int color1) {
 
 	VertsN = 8;
@@ -97,7 +112,7 @@ void TMesh::SetToCube(V3 cc, float sideLength, unsigned int color0, unsigned int
 	Tris[3 * tri + 1] = 2;
 	Tris[3 * tri + 2] = 1;
 	tri++;
-
+	RecalculateBoundingBox();
 }
 
 void TMesh::DrawCubeQuadFaces(FrameBuffer *fb, PPC *ppc, unsigned int color) {
@@ -194,11 +209,11 @@ void TMesh::LoadBin(char *filename) {
 
 	cerr << "INFO: loaded " << VertsN << " verts, " << TrisN << " tris from " << endl << "      " << filename << endl;
 	cerr << "      xyz " << ((Colors) ? "rgb " : "") << ((Normals) ? "nxnynz " : "") << ((tcs) ? "tcstct " : "") << endl;
-
+	RecalculateBoundingBox();
 }
 
 V3 TMesh::GetCenter() {
-
+	return BoundingBox.GetCenter();
 	V3 ret(0.0f, 0.0f, 0.0f);
 	for (int vi = 0; vi < VertsN; vi++) {
 		ret = ret + Verts[vi];
@@ -213,7 +228,7 @@ void TMesh::Translate(V3 tv) {
 	for (int vi = 0; vi < VertsN; vi++) {
 		Verts[vi] = Verts[vi] + tv;
 	}
-
+	RecalculateBoundingBox();
 }
 
 void TMesh::SetCenter(V3 center) {
@@ -230,5 +245,5 @@ void TMesh::Rotate(V3 aO, V3 aDir, float theta) {
 	for (int vi = 0; vi < VertsN; vi++) {
 		Verts[vi] = Verts[vi].RotatePoint(aO, aDir, theta);
 	}
-
+	RecalculateBoundingBox();
 }
