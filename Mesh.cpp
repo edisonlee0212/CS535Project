@@ -5,9 +5,11 @@
 
 #include "Mesh.h"
 
+
+#include <future>
 #include <vector>
 
-
+#include "scene.h"
 #include "mat3.h"
 
 using namespace std;
@@ -27,7 +29,26 @@ void Mesh::RecalculateBoundingBox()
 {
 	_BoundingBox.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 	_BoundingBox.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-	for (auto i = 0; i < _VertsN; i++)
+	std::vector<shared_future<void>> results;
+	const auto tSize = Scene::GetThreadPool()->Size();
+	size_t group = _VertsN / tSize;
+	results.reserve(tSize);
+	for(auto t = 0; t < tSize; t++)
+	{
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					if (_BoundingBox.MaxBound[0] < _Verts[i][0]) _BoundingBox.MaxBound[0] = _Verts[i][0];
+					if (_BoundingBox.MaxBound[1] < _Verts[i][1]) _BoundingBox.MaxBound[1] = _Verts[i][1];
+					if (_BoundingBox.MaxBound[2] < _Verts[i][2]) _BoundingBox.MaxBound[2] = _Verts[i][2];
+					if (_BoundingBox.MinBound[0] > _Verts[i][0]) _BoundingBox.MinBound[0] = _Verts[i][0];
+					if (_BoundingBox.MinBound[1] > _Verts[i][1]) _BoundingBox.MinBound[1] = _Verts[i][1];
+					if (_BoundingBox.MinBound[2] > _Verts[i][2]) _BoundingBox.MinBound[2] = _Verts[i][2];
+				}
+			}).share());
+	}
+	for (auto i = tSize * group; i < _VertsN; i++)
 	{
 		if (_BoundingBox.MaxBound[0] < _Verts[i][0]) _BoundingBox.MaxBound[0] = _Verts[i][0];
 		if (_BoundingBox.MaxBound[1] < _Verts[i][1]) _BoundingBox.MaxBound[1] = _Verts[i][1];
@@ -35,6 +56,9 @@ void Mesh::RecalculateBoundingBox()
 		if (_BoundingBox.MinBound[0] > _Verts[i][0]) _BoundingBox.MinBound[0] = _Verts[i][0];
 		if (_BoundingBox.MinBound[1] > _Verts[i][1]) _BoundingBox.MinBound[1] = _Verts[i][1];
 		if (_BoundingBox.MinBound[2] > _Verts[i][2]) _BoundingBox.MinBound[2] = _Verts[i][2];
+	}
+	for (size_t i = 0; i < results.size(); i++) {
+		results[i].wait();
 	}
 }
 
@@ -166,14 +190,112 @@ vec3 Mesh::SetEEQs(vec3 v0, vec3 v1, vec3 v2)
 
 void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 {
+#pragma region Points projection
 	vector<vec3> proj;
 	proj.resize(_VertsN);
-	for (auto vi = 0; vi < _VertsN; vi++)
+	std::vector<shared_future<void>> results;
+	auto tSize = Scene::GetThreadPool()->Size();
+	size_t group = _VertsN / tSize;
+	results.reserve(tSize);
+	for (auto t = 0; t < tSize; t++)
 	{
-		ppc->Project(_Verts[vi], proj[vi]);
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &ppc, &proj](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					ppc->Project(_Verts[i], proj[i]);
+				}
+			}).share());
 	}
+	for (auto i = tSize * group; i < _VertsN; i++)
+	{
+		ppc->Project(_Verts[i], proj[i]);
+	}
+	for (auto& result : results)
+	{
+		result.wait();
+	}
+#pragma endregion
+#pragma region SetColor
+	results.clear();
+	tSize = Scene::GetThreadPool()->Size();
+	group = _TrisN / tSize;
+	results.reserve(tSize);
+	std::mutex writeMutex;
+	for (auto t = 0; t < tSize; t++)
+	{
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &fb, &writeMutex](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					vec3 vertices[3], colors[3];
+					vertices[0] = proj[_Tris[3 * i + 0]];
+					vertices[1] = proj[_Tris[3 * i + 1]];
+					vertices[2] = proj[_Tris[3 * i + 2]];
+					colors[0] = _Colors[_Tris[3 * i + 0]];
+					colors[1] = _Colors[_Tris[3 * i + 1]];
+					colors[2] = _Colors[_Tris[3 * i + 2]];
 
-	for (int i = 0; i < _TrisN; i++)
+					if (vertices[0][0] == FLT_MAX || vertices[1][0] == FLT_MAX || vertices[2][0] == FLT_MAX) continue;
+					Bounds bound;
+					bound.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+					bound.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+					for (auto& pv : vertices)
+					{
+						if (bound.MaxBound[0] < pv[0]) bound.MaxBound[0] = pv[0];
+						if (bound.MaxBound[1] < pv[1]) bound.MaxBound[1] = pv[1];
+						if (bound.MaxBound[2] < pv[2]) bound.MaxBound[2] = pv[2];
+						if (bound.MinBound[0] > pv[0]) bound.MinBound[0] = pv[0];
+						if (bound.MinBound[1] > pv[1]) bound.MinBound[1] = pv[1];
+						if (bound.MinBound[2] > pv[2]) bound.MinBound[2] = pv[2];
+					}
+					vec3 minClip(0.0f, 0.0f, 0.0f);
+					vec3 maxClip(static_cast<float>(fb->Width), static_cast<float>(fb->Height), 0.0f);
+					vec3 eeqs[3];
+					for (auto vi = 0; vi < 3; vi++)
+					{
+						eeqs[vi][0] = vertices[(vi + 1) % 3][1] - vertices[vi][1];
+						eeqs[vi][1] = vertices[vi][0] - vertices[(vi + 1) % 3][0];
+						eeqs[vi][2] = -vertices[vi][0] * eeqs[vi][0] + vertices[vi][1] * -eeqs[vi][1];
+						vec3 v2p(vertices[(vi + 2) % 3][0], vertices[(vi + 2) % 3][1], 1.0f);
+						if (v2p * eeqs[vi] < 0.0f)
+							eeqs[vi] = eeqs[vi] * -1.0f;
+					}
+					if (!bound.Clip(minClip, maxClip, 2))
+						continue;
+					const auto left = static_cast<int>(bound.MinBound[0] + 0.5f);
+					const auto right = static_cast<int>(bound.MaxBound[0] - 0.5f);
+					const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
+					const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
+
+					mat3 mat;
+					mat.SetColumn(0, vec3(vertices[0][0], vertices[1][0], vertices[2][0]));
+					mat.SetColumn(1, vec3(vertices[0][1], vertices[1][1], vertices[2][1]));
+					mat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
+					mat = mat.Inverted();
+					const auto r = mat * vec3(colors[0][0], colors[1][0], colors[2][0]);
+					const auto g = mat * vec3(colors[0][1], colors[1][1], colors[2][1]);
+					const auto b = mat * vec3(colors[0][2], colors[1][2], colors[2][2]);
+					const auto z = mat * vec3(vertices[0][2], vertices[1][2], vertices[2][2]);
+
+					for (auto v = top; v <= bottom; v++)
+					{
+						for (auto u = left; u <= right; u++)
+						{
+							vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+							if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
+								|| pix * eeqs[2] < 0.0f)
+								continue;
+							vec3 ccv(pix * r, pix * g, pix * b);
+							pix[2] = pix * z;
+							std::lock_guard<std::mutex> lock(writeMutex);
+							fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
+						}
+					}
+				}
+			}).share());
+	}
+	for (auto i = tSize * group; i < _TrisN; i++)
 	{
 		vec3 vertices[3], colors[3];
 		vertices[0] = proj[_Tris[3 * i + 0]];
@@ -239,6 +361,11 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 			}
 		}
 	}
+	for (auto& result : results)
+	{
+		result.wait();
+	}
+#pragma endregion
 }
 
 void Mesh::LoadBin(char* filename)
@@ -322,11 +449,28 @@ vec3 Mesh::GetCenter()
 	return _BoundingBox.GetCenter();
 }
 
-void Mesh::Translate(vec3 tv)
+void Mesh::Translate(vec3 value)
 {
-	for (int vi = 0; vi < _VertsN; vi++)
+	std::vector<shared_future<void>> results;
+	const auto tSize = Scene::GetThreadPool()->Size();
+	size_t group = _VertsN / tSize;
+	results.reserve(tSize);
+	for (auto t = 0; t < tSize; t++)
 	{
-		_Verts[vi] = _Verts[vi] + tv;
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, value](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					_Verts[i] = _Verts[i] + value;
+				}
+			}).share());
+	}
+	for (auto i = tSize * group; i < _VertsN; i++)
+	{
+		_Verts[i] = _Verts[i] + value;
+	}
+	for (size_t i = 0; i < results.size(); i++) {
+		results[i].wait();
 	}
 	RecalculateBoundingBox();
 }
@@ -340,9 +484,59 @@ void Mesh::SetCenter(vec3 center)
 
 void Mesh::Rotate(vec3 aO, vec3 aDir, float theta)
 {
-	for (int vi = 0; vi < _VertsN; vi++)
+	std::vector<shared_future<void>> results;
+	const auto tSize = Scene::GetThreadPool()->Size();
+	size_t group = _VertsN / tSize;
+	results.reserve(tSize);
+	for (auto t = 0; t < tSize; t++)
 	{
-		_Verts[vi] = _Verts[vi].RotatePoint(aO, aDir, theta);
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, aO, aDir, theta](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					_Verts[i] = _Verts[i].RotatePoint(aO, aDir, theta);
+				}
+			}).share());
+	}
+	for (auto i = tSize * group; i < _VertsN; i++)
+	{
+		_Verts[i] = _Verts[i].RotatePoint(aO, aDir, theta);
+	}
+	for (size_t i = 0; i < results.size(); i++) {
+		results[i].wait();
 	}
 	RecalculateBoundingBox();
+}
+
+void Mesh::Scale(vec3 value)
+{
+	vec3 center = GetCenter();
+	SetCenter(vec3(0.0f, 0.0f, 0.0f));
+
+	std::vector<shared_future<void>> results;
+	const auto tSize = Scene::GetThreadPool()->Size();
+	size_t group = _VertsN / tSize;
+	results.reserve(tSize);
+	for (auto t = 0; t < tSize; t++)
+	{
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &value](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					_Verts[i][0] *= value[0];
+					_Verts[i][1] *= value[1];
+					_Verts[i][2] *= value[2];
+				}
+			}).share());
+	}
+	for (auto i = tSize * group; i < _VertsN; i++)
+	{
+		_Verts[i][0] *= value[0];
+		_Verts[i][1] *= value[1];
+		_Verts[i][2] *= value[2];
+	}
+	for (size_t i = 0; i < results.size(); i++) {
+		results[i].wait();
+	}
+	SetCenter(center);
 }

@@ -1,18 +1,19 @@
 #pragma once
-
 #include "gui.h"
 #include "framebuffer.h"
 #include "Camera.h"
 #include "Mesh.h"
+#include "ThreadPool.h"
 #include <vector>
 class Scene
 {
-public:
-	vector<Mesh*> Meshes;
-	//Mesh* Meshes;
-	Camera* ppc;
+	static ThreadPool _ThreadPool;
+	vector<Mesh*> _Meshes;
+	Camera* _Camera;
+	FrameBuffer* _FrameBuffer;
 	GUI* gui;
-	FrameBuffer* fb;
+public:
+	static ThreadPool* GetThreadPool();
 	Scene();
 	void DBG() const;
 	static void NewButton();

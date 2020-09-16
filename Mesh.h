@@ -31,6 +31,7 @@ public:
 	static vec3 SetEEQs(vec3 v0, vec3 v1, vec3 v2);
 	vec3 GetCenter();
 	void SetCenter(vec3 center);
-	void Translate(vec3 tv);
+	void Translate(vec3 value);
 	void Rotate(vec3 aO, vec3 aDir, float theta);
+	void Scale(vec3 value);
 };
