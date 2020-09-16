@@ -19,7 +19,7 @@ FrameBuffer::FrameBuffer(int u0, int v0,
 	ZBuffer = new float[Width * Height];
 }
 
-void FrameBuffer::ClearZB()
+void FrameBuffer::ClearZBuffer() const
 {
 	for (int uv = 0; uv < Width * Height; uv++)
 		ZBuffer[uv] = 0.0f;

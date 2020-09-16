@@ -6,5 +6,5 @@ struct Bounds
 	vec3 MinBound;
 	vec3 MaxBound;
 	vec3 GetCenter();
-	bool Clip(vec3 minc, vec3 maxc, int dimsN);
+	bool Clip(vec3 minClip, vec3 maxClip, int dimsN);
 };

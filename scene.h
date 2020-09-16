@@ -8,8 +8,8 @@
 class Scene
 {
 public:
-	vector<Mesh*> TMeshes;
-	//Mesh* TMeshes;
+	vector<Mesh*> Meshes;
+	//Mesh* Meshes;
 	Camera* ppc;
 	GUI* gui;
 	FrameBuffer* fb;

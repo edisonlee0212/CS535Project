@@ -26,5 +26,5 @@ public:
 	void Draw2DSegment(vec3 p0, vec3 c0, vec3 p1, vec3 c1);
 	void DrawSquarePoint(float uf, float vf, int psize, unsigned int color);
 	int Farther(int u, int v, float currz);
-	void ClearZB();
+	void ClearZBuffer() const;
 };

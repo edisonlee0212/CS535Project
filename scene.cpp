@@ -33,14 +33,14 @@ Scene::Scene()
 	float hfov = 55.0f;
 	ppc = new Camera(hfov, fb->Width, fb->Height);
 
-	TMeshes.push_back(new Mesh());
-	TMeshes.push_back(new Mesh());
+	Meshes.push_back(new Mesh());
+	Meshes.push_back(new Mesh());
 	
-	TMeshes[0]->LoadBin("geometry/teapot1K.bin");
-	TMeshes[0]->SetCenter(vec3(0.0f, 0.0f, -300.0f));
+	Meshes[0]->LoadBin("geometry/teapot1K.bin");
+	Meshes[0]->SetCenter(vec3(0.0f, 0.0f, -300.0f));
 
-	TMeshes[1]->LoadBin("geometry/teapot1K.bin");
-	TMeshes[1]->SetCenter(vec3(50.0f, 0.0f, -200.0f));
+	Meshes[1]->LoadBin("geometry/teapot1K.bin");
+	Meshes[1]->SetCenter(vec3(50.0f, 0.0f, -200.0f));
 
 	Render();
 }
@@ -48,13 +48,13 @@ Scene::Scene()
 void Scene::Render() const
 {
 	fb->SetBGR(0xFFFFFFFF);
-	fb->ClearZB();
+	fb->ClearZBuffer();
 
-	for (const auto& mesh : TMeshes)
+	for (const auto& mesh : Meshes)
 	{
 		if (!mesh->Enabled)
 			continue;
-		//TMeshes[tmi].DrawWireFrame(fb, ppc, 0xFF000000);
+		//Meshes[tmi].DrawWireFrame(fb, ppc, 0xFF000000);
 		mesh->DrawFilled(fb, ppc);
 	}
 
@@ -64,8 +64,10 @@ void Scene::Render() const
 void Scene::DBG() const
 {
 	{
-		vec3 target = TMeshes[0]->GetCenter();
+		vec3 target = Meshes[0]->GetCenter();
 		vec3 center = vec3(20.0f, 50.0f, -30.0f);
+
+		Meshes[0]->Rotate(Meshes[0]->GetCenter(), vec3(0, 1, 0), 90);
 		ppc->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 		Render();
 		return;
@@ -75,7 +77,7 @@ void Scene::DBG() const
 		{
 			Render();
 			Fl::check();
-			//			TMeshes[1].Rotate(tcenter, aDir, 1.0f);
+			//			Meshes[1].Rotate(tcenter, aDir, 1.0f);
 			ppc->PanLeftRight(1.0f);
 		}
 		return;
@@ -87,7 +89,7 @@ void Scene::DBG() const
 	}
 
 	{
-		TMeshes[0]->Enabled = false;
+		Meshes[0]->Enabled = false;
 		int fN = 300;
 		float tstep = .1f;
 		for (int fi = 0; fi < fN; fi++)

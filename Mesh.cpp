@@ -25,9 +25,9 @@ void Mesh::Allocate(int vertsN, int trisN)
 
 void Mesh::RecalculateBoundingBox()
 {
-	_BoundingBox.MaxBound = vec3(-999999, -999999, -999999);
-	_BoundingBox.MinBound = vec3(999999, 999999, 999999);
-	for (int i = 0; i < _VertsN; i++)
+	_BoundingBox.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	_BoundingBox.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+	for (auto i = 0; i < _VertsN; i++)
 	{
 		if (_BoundingBox.MaxBound[0] < _Verts[i][0]) _BoundingBox.MaxBound[0] = _Verts[i][0];
 		if (_BoundingBox.MaxBound[1] < _Verts[i][1]) _BoundingBox.MaxBound[1] = _Verts[i][1];
@@ -173,20 +173,20 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 		ppc->Project(_Verts[vi], proj[vi]);
 	}
 
-	for (int tri = 0; tri < _TrisN; tri++)
+	for (int i = 0; i < _TrisN; i++)
 	{
 		vec3 vertices[3], colors[3];
-		vertices[0] = proj[_Tris[3 * tri + 0]];
-		vertices[1] = proj[_Tris[3 * tri + 1]];
-		vertices[2] = proj[_Tris[3 * tri + 2]];
-		colors[0] = _Colors[_Tris[3 * tri + 0]];
-		colors[1] = _Colors[_Tris[3 * tri + 1]];
-		colors[2] = _Colors[_Tris[3 * tri + 2]];
+		vertices[0] = proj[_Tris[3 * i + 0]];
+		vertices[1] = proj[_Tris[3 * i + 1]];
+		vertices[2] = proj[_Tris[3 * i + 2]];
+		colors[0] = _Colors[_Tris[3 * i + 0]];
+		colors[1] = _Colors[_Tris[3 * i + 1]];
+		colors[2] = _Colors[_Tris[3 * i + 2]];
 
 		if (vertices[0][0] == FLT_MAX || vertices[1][0] == FLT_MAX || vertices[2][0] == FLT_MAX) continue;
 		Bounds bound;
-		bound.MaxBound = vec3(-999999, -999999, -999999);
-		bound.MinBound = vec3(999999, 999999, 999999);
+		bound.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		bound.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
 		for (auto& pv : vertices)
 		{
 			if (bound.MaxBound[0] < pv[0]) bound.MaxBound[0] = pv[0];
@@ -196,20 +196,25 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 			if (bound.MinBound[1] > pv[1]) bound.MinBound[1] = pv[1];
 			if (bound.MinBound[2] > pv[2]) bound.MinBound[2] = pv[2];
 		}
-		vec3 minc(0.0f, 0.0f, 0.0f);
-		vec3 maxc(static_cast<float>(fb->Width), static_cast<float>(fb->Height), 0.0f);
+		vec3 minClip(0.0f, 0.0f, 0.0f);
+		vec3 maxClip(static_cast<float>(fb->Width), static_cast<float>(fb->Height), 0.0f);
 		vec3 eeqs[3];
-		for (auto i = 0; i < 3; i++)
+		for (auto vi = 0; vi < 3; vi++)
 		{
-			eeqs[i] = SetEEQs(vertices[i], vertices[(i + 1) % 3], vertices[(i + 2) % 3]);
+			eeqs[vi][0] = vertices[(vi + 1) % 3][1] - vertices[vi][1];
+			eeqs[vi][1] = vertices[vi][0] - vertices[(vi + 1) % 3][0];
+			eeqs[vi][2] = -vertices[vi][0] * eeqs[vi][0] + vertices[vi][1] * -eeqs[vi][1];
+			vec3 v2p(vertices[(vi + 2) % 3][0], vertices[(vi + 2) % 3][1], 1.0f);
+			if (v2p * eeqs[vi] < 0.0f)
+				eeqs[vi] = eeqs[vi] * -1.0f;
 		}
-		if (!bound.Clip(minc, maxc, 2))
+		if (!bound.Clip(minClip, maxClip, 2))
 			continue;
 		const auto left = static_cast<int>(bound.MinBound[0] + 0.5f);
 		const auto right = static_cast<int>(bound.MaxBound[0] - 0.5f);
 		const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
 		const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
-		
+
 		mat3 mat;
 		mat.SetColumn(0, vec3(vertices[0][0], vertices[1][0], vertices[2][0]));
 		mat.SetColumn(1, vec3(vertices[0][1], vertices[1][1], vertices[2][1]));
@@ -219,7 +224,7 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 		const auto g = mat * vec3(colors[0][1], colors[1][1], colors[2][1]);
 		const auto b = mat * vec3(colors[0][2], colors[1][2], colors[2][2]);
 		const auto z = mat * vec3(vertices[0][2], vertices[1][2], vertices[2][2]);
-		
+
 		for (auto v = top; v <= bottom; v++)
 		{
 			for (auto u = left; u <= right; u++)
