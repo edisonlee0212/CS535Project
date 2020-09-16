@@ -86,33 +86,33 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="aabb.h" />
+    <ClInclude Include="Bounds.h" />
     <ClInclude Include="framebuffer.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="gui.h" />
-    <ClInclude Include="M33.h" />
-    <ClInclude Include="ppc.h" />
+    <ClInclude Include="mat3.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="TMesh.h" />
-    <ClInclude Include="V3.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="vec3.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="aabb.cpp" />
+    <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="framebuffer.cpp" />
     <ClCompile Include="gui.cxx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="M33.cpp" />
-    <ClCompile Include="ppc.cpp" />
+    <ClCompile Include="mat3.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TMesh.cpp" />
-    <ClCompile Include="V3.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="vec3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CG\shaderOne.cg" />

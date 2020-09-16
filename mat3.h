@@ -1,19 +1,21 @@
 #pragma once
 
-#include "V3.h"
+#include "vec3.h"
 
 using namespace std;
 
 
-class M33 {
-public:
-	V3 rows[3];
-	M33() {};
-	V3& operator[](int i);
-	V3 operator*(V3 v);
-	M33 Inverted();
-	V3 GetColumn(int i);
-	void SetColumn(int i, V3 v);
+struct mat3
+{
+	vec3 value[3];
+	mat3()
+	{
+	};
+	vec3& operator[](int i);
+	vec3 operator*(vec3 v);
+	mat3 Inverted();
+	vec3 GetColumn(int i);
+	void SetColumn(int i, vec3 v);
 	void SetRotationAboutY(float theta);
 };
 

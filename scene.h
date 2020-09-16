@@ -2,19 +2,21 @@
 
 #include "gui.h"
 #include "framebuffer.h"
-#include "ppc.h"
-#include "TMesh.h"
-class Scene {
+#include "Camera.h"
+#include "Mesh.h"
+#include <vector>
+class Scene
+{
 public:
-	TMesh* tmeshes;
-	PPC* ppc;
-	GUI *gui;
-	FrameBuffer *fb;
+	vector<Mesh*> TMeshes;
+	//Mesh* TMeshes;
+	Camera* ppc;
+	GUI* gui;
+	FrameBuffer* fb;
 	Scene();
-	size_t tmeshesN;
-	void DBG();
-	void NewButton();
-	void Render();
+	void DBG() const;
+	static void NewButton();
+	void Render() const;
 };
 
-extern Scene *scene;
+extern Scene* scene;
