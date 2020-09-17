@@ -12,12 +12,18 @@ class Scene
 	Camera* _Camera;
 	FrameBuffer* _FrameBuffer;
 	GUI* gui;
+	float lastTimeStep = 0;
+	float currentTime = 0;
 public:
 	static ThreadPool* GetThreadPool();
 	Scene();
-	void DBG() const;
+	void DBG();
 	static void NewButton();
 	void Render() const;
+
+	void FixedUpdate();
+	void Update();
+	void LateUpdate();
 };
 
 extern Scene* scene;

@@ -33,7 +33,7 @@ void Mesh::RecalculateBoundingBox()
 	const auto tSize = Scene::GetThreadPool()->Size();
 	size_t group = _VertsN / tSize;
 	results.reserve(tSize);
-	for(auto t = 0; t < tSize; t++)
+	for (auto t = 0; t < tSize; t++)
 	{
 		results.push_back(Scene::GetThreadPool()->Push([t, group, this](int id)
 			{
@@ -188,7 +188,7 @@ vec3 Mesh::SetEEQs(vec3 v0, vec3 v1, vec3 v2)
 }
 
 
-void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
+void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode) const
 {
 #pragma region Points projection
 	vector<vec3> proj;
@@ -224,7 +224,7 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 	std::mutex writeMutex;
 	for (auto t = 0; t < tSize; t++)
 	{
-		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &fb, &writeMutex](int id)
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &fb, &writeMutex, mode](int id)
 			{
 				for (auto i = t * group; i < (t + 1) * group; i++)
 				{
@@ -273,10 +273,23 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc) const
 					mat.SetColumn(1, vec3(vertices[0][1], vertices[1][1], vertices[2][1]));
 					mat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
 					mat = mat.Inverted();
-					const auto r = mat * vec3(colors[0][0], colors[1][0], colors[2][0]);
-					const auto g = mat * vec3(colors[0][1], colors[1][1], colors[2][1]);
-					const auto b = mat * vec3(colors[0][2], colors[1][2], colors[2][2]);
-					const auto z = mat * vec3(vertices[0][2], vertices[1][2], vertices[2][2]);
+					vec3 r, g, b, z;
+					
+					z = mat * vec3(vertices[0][2], vertices[1][2], vertices[2][2]);
+					
+					switch (mode)
+					{
+					case _FillMode_Z:
+						r = g = b = z;
+						break;
+					case _FillMode_Vertex_Color:
+					default:
+						r = mat * vec3(colors[0][0], colors[1][0], colors[2][0]);
+						g = mat * vec3(colors[0][1], colors[1][1], colors[2][1]);
+						b = mat * vec3(colors[0][2], colors[1][2], colors[2][2]);
+						break;
+					}
+					
 
 					for (auto v = top; v <= bottom; v++)
 					{

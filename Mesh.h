@@ -5,6 +5,12 @@
 #include "Bounds.h"
 #include "framebuffer.h"
 
+enum FillMode
+{
+	_FillMode_Vertex_Color,
+	_FillMode_Z
+};
+
 class Mesh
 {
 	Bounds _BoundingBox;
@@ -26,7 +32,7 @@ public:
 	void Allocate(int vertsN, int trisN);
 	void DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
 	void DrawWireFrame(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
-	void DrawFilled(FrameBuffer* fb, Camera* ppc) const;
+	void DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode = _FillMode_Vertex_Color) const;
 	void LoadBin(char* filename);
 	static vec3 SetEEQs(vec3 v0, vec3 v1, vec3 v2);
 	vec3 GetCenter();
