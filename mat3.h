@@ -13,10 +13,25 @@ struct mat3
 	};
 	vec3& operator[](int i);
 	vec3 operator*(vec3 v);
+	mat3 mat3::operator*(mat3 m1) {
+		mat3 ret, & m = *this;
+		ret.SetColumn(0, m * m1.GetColumn(0));
+		ret.SetColumn(1, m * m1.GetColumn(1));
+		ret.SetColumn(2, m * m1.GetColumn(2));
+		return ret;
+	}
 	mat3 Inverted();
 	vec3 GetColumn(int i);
 	void SetColumn(int i, vec3 v);
 	void SetRotationAboutY(float theta);
+	mat3 Transpose()
+	{
+		mat3 ret;
+		ret[0] = GetColumn(0);
+		ret[1] = GetColumn(1);
+		ret[2] = GetColumn(2);
+		return ret;
+	}
 };
 
 // m00 m01 m02    v0    r0*v

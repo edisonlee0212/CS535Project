@@ -1,29 +1,40 @@
 #pragma once
 
+#include <vector>
+
 #include "vec3.h"
+#include "mat3.h"
 #include "Camera.h"
 #include "Bounds.h"
 #include "framebuffer.h"
 
+class Material;
+
 enum FillMode
 {
-	_FillMode_Vertex_Color,
-	_FillMode_Z
+	_FillMode_Vertex_Color_ScreenSpaceInterpolation,
+	_FillMode_Vertex_Color_ModelSpaceInterpolation,
+	_FillMode_Z,
+	_FillMode_Texture_Bilinear,
+	_FillMode_Texture_Trilinear
 };
 
 class Mesh
 {
 	Bounds _BoundingBox;
-	vec3* _Verts;
-	vec3* _Colors;
-	vec3* _Normals;
+	vector<vec3> _Verts;
+	vector<vec3> _Colors;
+	vector<vec3> _Normals;
+	vector<vec2> _TexCoords;
 	int _VertsN;
-	unsigned int* _Tris;
+	vector<unsigned> _Tris;
 	int _TrisN;
 public:
 	bool Enabled;
-
-	Mesh() : _Verts(nullptr), _Colors(nullptr), _Normals(nullptr), _VertsN(0), _Tris(nullptr), _TrisN(0), Enabled(true)
+	bool HasColors;
+	bool HasNormals;
+	bool HasTexCoords;
+	Mesh() : _VertsN(0), _TrisN(0), Enabled(true)
 	{
 	}
 
@@ -32,7 +43,7 @@ public:
 	void Allocate(int vertsN, int trisN);
 	void DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
 	void DrawWireFrame(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
-	void DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode = _FillMode_Vertex_Color) const;
+	void DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode = _FillMode_Vertex_Color_ScreenSpaceInterpolation, Material* material = nullptr) const;
 	void LoadBin(char* filename);
 	static vec3 SetEEQs(vec3 v0, vec3 v1, vec3 v2);
 	vec3 GetCenter();
@@ -40,4 +51,20 @@ public:
 	void Translate(vec3 value);
 	void Rotate(vec3 aO, vec3 aDir, float theta);
 	void Scale(vec3 value);
+	static mat3 GetModelSpaceInterpolationMat(mat3 vs, Camera* camera)
+	{
+		mat3 qm = vs.Transpose();
+		qm.SetColumn(0, qm.GetColumn(0) - camera->Center);
+		qm.SetColumn(1, qm.GetColumn(1) - camera->Center);
+		qm.SetColumn(2, qm.GetColumn(2) - camera->Center);
+
+		mat3 cam;
+		cam.SetColumn(0, camera->Left);
+		cam.SetColumn(1, camera->Up);
+		cam.SetColumn(2, camera->c);
+
+		qm = qm.Inverted() * cam;
+
+		return qm;
+	}
 };

@@ -123,7 +123,7 @@ void FrameBuffer::LoadTiff(char* fileName)
 // save as tiff image
 void FrameBuffer::SaveAsTiff(char* fileName)
 {
-	TIFF* out = TIFFOpen(fileName, "Width");
+	TIFF* out = TIFFOpen(fileName, "w");
 
 	if (out == nullptr)
 	{

@@ -19,7 +19,7 @@ ThreadPool* Scene::GetThreadPool()
 {
 	return &_ThreadPool;
 }
-
+#define A2
 Scene::Scene()
 {
 	gui = new GUI();
@@ -42,6 +42,7 @@ Scene::Scene()
 
 	_Camera->SetPose(vec3(0.0f, 0.0f, 200.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	
+#ifdef A2
 	auto DNA = new Mesh();
 	DNA->LoadBin("geometry/DNA.bin");
 	DNA->SetCenter(vec3(0.0f, 0.0f, 0.0f));
@@ -61,7 +62,7 @@ Scene::Scene()
 	teapot2->LoadBin("geometry/teapot1K.bin");
 	teapot2->SetCenter(vec3(100.0f, -50.0f, 0.0f));
 	teapot2->Scale(vec3(1.0f, 1.0f, 1.0f));
-	
+
 	auto happy0 = new Mesh();
 	happy0->LoadBin("geometry/happy4.bin");
 	happy0->SetCenter(vec3(-100.0f, 50.0f, 0.0f));
@@ -76,7 +77,7 @@ Scene::Scene()
 	happy2->LoadBin("geometry/happy4.bin");
 	happy2->SetCenter(vec3(-100.0f, -50.0f, 0.0f));
 	happy2->Scale(vec3(200.0f, 200.0f, 200.0f));
-	
+
 	_Meshes.push_back(DNA);
 	_Meshes.push_back(teapot0);
 	_Meshes.push_back(teapot1);
@@ -84,6 +85,11 @@ Scene::Scene()
 	_Meshes.push_back(happy0);
 	_Meshes.push_back(happy1);
 	_Meshes.push_back(happy2);
+#endif
+#ifdef A3
+
+#endif
+
 	
 	Render();
 }
@@ -97,37 +103,57 @@ void Scene::Render() const
 	{
 		if (!mesh->Enabled)
 			continue;
-		mesh->DrawFilled(_FrameBuffer, _Camera, _FillMode_Vertex_Color);
+#ifdef A2
+		mesh->DrawFilled(_FrameBuffer, _Camera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
+#endif
+#ifdef A3
+		mesh->DrawFilled(_FrameBuffer, _Camera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
+#endif
 	}
 	_FrameBuffer->redraw();
 }
 
 void Scene::FixedUpdate()
 {
-	//_Meshes[0]->Rotate(_Meshes[0]->GetCenter(), vec3(0.0f, 1.0f, 0.0f), 2.0f);
+#ifdef A2
 	_Meshes[1]->Rotate(_Meshes[1]->GetCenter(), vec3(1.0f, 1.0f, 0.0f), 2.0f);
 	_Meshes[2]->Rotate(_Meshes[2]->GetCenter(), vec3(1.0f, 0.0f, 1.0f), 2.0f);
 	_Meshes[4]->Rotate(_Meshes[4]->GetCenter(), vec3(0.0f, 1.0f, 1.0f), 2.0f);
 	_Meshes[5]->Rotate(_Meshes[5]->GetCenter(), vec3(0.0f, 0.0f, 1.0f), 2.0f);
+#endif
+#ifdef A3
+
+#endif	
 }
 
 void Scene::Update()
 {
 	if (currentTime > 5.0f && currentTime < 10.0f) {
-		vec3 target = vec3(0.0f ,0.0f, 0.0f);
+#ifdef A2
+		vec3 target = vec3(0.0f, 0.0f, 0.0f);
 		vec3 center = vec3(200.0f * sin((currentTime - 5.0f) / 5.0f * 3.1415926f), 0.0f, 200.0f * cos((currentTime - 5.0f) / 5.0f * 3.1415926f));
 		_Camera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
+#endif
+#ifdef A3
+
+#endif	
+		
 	}
 }
 
 void Scene::LateUpdate()
 {
-	
+#ifdef A2
+
+#endif
+#ifdef A3
+
+#endif
 }
 
 void Scene::DBG()
 {
-	
+	_FrameBuffer->SaveAsTiff("a.tif");
 	float delta = 0.1f;
 	auto start = std::chrono::high_resolution_clock::now();
 	// A floating point milliseconds type
@@ -143,7 +169,7 @@ void Scene::DBG()
 		auto stop = std::chrono::high_resolution_clock::now();
 		currentTime = FpSeconds(stop - start).count();
 		Update();
-		if(currentTime - lastTimeStep >= 0.01f)
+		if(currentTime - lastTimeStep >= 0.0f)
 		{
 			lastTimeStep = currentTime;
 			FixedUpdate();
@@ -155,4 +181,5 @@ void Scene::DBG()
 void Scene::NewButton()
 {
 	cerr << "INFO: pressed New Button" << endl;
+	
 }
