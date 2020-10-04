@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <GL/glut.h>
@@ -9,8 +10,8 @@
 class FrameBuffer : public Fl_Gl_Window
 {
 public:
-	unsigned int* Pixels; // pixel array
-	float* ZBuffer;
+	vector<unsigned> Pixels; // pixel array
+	vector<float> ZBuffer;
 	int Width, Height;
 	FrameBuffer(int u0, int v0, int width, int height, unsigned int _id);
 	void draw() override;
@@ -18,6 +19,7 @@ public:
 	int handle(int event) override;
 	void SetBGR(unsigned int bgr);
 	void Set(int u, int v, unsigned int color);
+	void Resize(int width, int height);
 	void SetZ(int u, int v, float z, unsigned int color);
 	void LoadTiff(char* fileName);
 	void SaveAsTiff(char* fileName);
@@ -26,5 +28,5 @@ public:
 	void Draw2DSegment(vec3 p0, vec3 c0, vec3 p1, vec3 c1);
 	void DrawSquarePoint(float uf, float vf, int psize, unsigned int color);
 	int Farther(int u, int v, float currz);
-	void ClearZBuffer() const;
+	void ClearZBuffer();
 };

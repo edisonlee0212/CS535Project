@@ -104,7 +104,7 @@ struct vec3
 	{
 		value[0] = xy[0];
 		value[1] = xy[1];
-		value[2] = 0;
+		value[2] = 1;
 	}
 	float value[3];
 	float& operator[](int i);

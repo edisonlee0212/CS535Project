@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-
+#include <mutex>
 #include "vec3.h"
 #include "mat3.h"
 #include "Camera.h"
@@ -15,6 +15,7 @@ enum FillMode
 	_FillMode_Vertex_Color_ScreenSpaceInterpolation,
 	_FillMode_Vertex_Color_ModelSpaceInterpolation,
 	_FillMode_Z,
+	_FillMode_Texture_Nearest,
 	_FillMode_Texture_Bilinear,
 	_FillMode_Texture_Trilinear
 };
@@ -29,6 +30,8 @@ class Mesh
 	int _VertsN;
 	vector<unsigned> _Tris;
 	int _TrisN;
+
+	inline void RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* ppc, FillMode mode, std::mutex& writeMutex, Material* material) const;
 public:
 	bool Enabled;
 	bool HasColors;
@@ -40,6 +43,7 @@ public:
 
 	void RecalculateBoundingBox();
 	void SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned int color1);
+	void SetToQuad(vec3 cc, float sideLength, unsigned int color0, unsigned int color1);
 	void Allocate(int vertsN, int trisN);
 	void DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
 	void DrawWireFrame(FrameBuffer* fb, Camera* ppc, unsigned int color) const;

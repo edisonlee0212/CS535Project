@@ -13,13 +13,18 @@ using namespace std;
 FrameBuffer::FrameBuffer(int u0, int v0,
                          int width, int height, unsigned int _id) : Fl_Gl_Window(u0, v0, width, height, nullptr)
 {
-	Width = width;
-	Height = height;
-	Pixels = new unsigned int[Width * Height];
-	ZBuffer = new float[Width * Height];
+	Resize(width, height);
 }
 
-void FrameBuffer::ClearZBuffer() const
+void FrameBuffer::Resize(int width, int height)
+{
+	Width = width;
+	Height = height;
+	Pixels.resize(Width * Height);
+	ZBuffer.resize(Width * Height);
+}
+
+void FrameBuffer::ClearZBuffer()
 {
 	for (int uv = 0; uv < Width * Height; uv++)
 		ZBuffer[uv] = 0.0f;
@@ -27,7 +32,7 @@ void FrameBuffer::ClearZBuffer() const
 
 void FrameBuffer::draw()
 {
-	glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels);
+	glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
 }
 
 int FrameBuffer::handle(int event)
@@ -103,16 +108,13 @@ void FrameBuffer::LoadTiff(char* fileName)
 	TIFFGetField(in, TIFFTAG_IMAGELENGTH, &height);
 	if (Width != width || Height != height)
 	{
-		Width = width;
-		Height = height;
-		delete[] Pixels;
-		Pixels = new unsigned int[Width * Height];
+		Resize(width, height);
 		size(Width, Height);
 		glFlush();
 		glFlush();
 	}
 
-	if (TIFFReadRGBAImage(in, Width, Height, Pixels, 0) == 0)
+	if (TIFFReadRGBAImage(in, Width, Height, Pixels.data(), 0) == 0)
 	{
 		cerr << "failed to load " << fileName << endl;
 	}

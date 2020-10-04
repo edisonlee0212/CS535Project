@@ -19,7 +19,7 @@ ThreadPool* Scene::GetThreadPool()
 {
 	return &_ThreadPool;
 }
-#define A2
+#define A3
 Scene::Scene()
 {
 	gui = new GUI();
@@ -87,7 +87,18 @@ Scene::Scene()
 	_Meshes.push_back(happy2);
 #endif
 #ifdef A3
+	auto mesh = new Mesh();
+	//mesh->LoadBin("geometry/teapot1K.bin");
+	mesh->SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	auto teapotTex = new Texture();
+	teapotTex->LoadTiff("uv-test.tif");
+	auto teapotMat = new Material();
+	teapotMat->SetTexture(teapotTex);
+	auto teapot = new Model(mesh, teapotMat);
+	teapot->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	teapot->SetScale(vec3(10.0f, 10.0f, 10.0f));
 
+	_Models.push_back(teapot);
 #endif
 
 	
@@ -98,18 +109,22 @@ void Scene::Render() const
 {
 	_FrameBuffer->SetBGR(0xFFFFFFFF);
 	_FrameBuffer->ClearZBuffer();
-
+#ifdef A2
 	for (const auto& mesh : _Meshes)
 	{
 		if (!mesh->Enabled)
 			continue;
-#ifdef A2
 		mesh->DrawFilled(_FrameBuffer, _Camera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
+	}
 #endif
 #ifdef A3
-		mesh->DrawFilled(_FrameBuffer, _Camera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
-#endif
+	for (const auto& model : _Models)
+	{
+		if (!model->Enabled)
+			continue;
+		model->Draw(_FrameBuffer, _Camera, _FillMode_Texture_Bilinear);
 	}
+#endif
 	_FrameBuffer->redraw();
 }
 
@@ -122,7 +137,7 @@ void Scene::FixedUpdate()
 	_Meshes[5]->Rotate(_Meshes[5]->GetCenter(), vec3(0.0f, 0.0f, 1.0f), 2.0f);
 #endif
 #ifdef A3
-
+	_Models[0]->GetMesh()->Rotate(_Models[0]->GetMesh()->GetCenter(), vec3(1.0f, 0.0f, 0.0f), 2.0f);
 #endif	
 }
 

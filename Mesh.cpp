@@ -13,9 +13,7 @@
 #include "mat3.h"
 #include "Material.h"
 
-
 using namespace std;
-
 
 void Mesh::Allocate(int vertsN, int trisN)
 {
@@ -24,6 +22,7 @@ void Mesh::Allocate(int vertsN, int trisN)
 	_Verts.resize(_VertsN);
 	_Colors.resize(_VertsN);
 	_Normals.resize(_VertsN);
+	_TexCoords.resize(_VertsN);
 	_Tris.resize(3 * _TrisN);
 }
 
@@ -66,35 +65,98 @@ void Mesh::RecalculateBoundingBox()
 
 void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned int color1)
 {
-	_VertsN = 8;
+	_VertsN = 24;
 	_TrisN = 6 * 2;
 	Allocate(_VertsN, _TrisN);
 
-	for (int vi = 0; vi < 4; vi++)
-	{
-		_Colors[vi].SetFromColor(color0);
-		_Colors[vi + 4].SetFromColor(color1);
-	}
-
+	HasTexCoords = true;
+	HasColors = true;
+	HasNormals = false;
 	int vi = 0;
+	//1234
 	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
 	vi++;
 	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
 	vi++;
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
 	vi++;
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
 	vi++;
 
-	_Verts[vi] = _Verts[vi - 4] + vec3(0.0f, 0.0f, -sideLength);
+	//5678
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
 	vi++;
-	_Verts[vi] = _Verts[vi - 4] + vec3(0.0f, 0.0f, -sideLength);
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
 	vi++;
-	_Verts[vi] = _Verts[vi - 4] + vec3(0.0f, 0.0f, -sideLength);
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
 	vi++;
-	_Verts[vi] = _Verts[vi - 4] + vec3(0.0f, 0.0f, -sideLength);
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
 	vi++;
 
+	//1256
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
+	vi++;
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
+	vi++;
+
+	//3478
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
+	vi++;
+
+	//2367
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
+	vi++;
+	
+	//1458
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
+	vi++;
+	
 	int tri = 0;
 	_Tris[3 * tri + 0] = 0;
 	_Tris[3 * tri + 1] = 1;
@@ -104,47 +166,51 @@ void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned in
 	_Tris[3 * tri + 1] = 3;
 	_Tris[3 * tri + 2] = 0;
 	tri++;
-	_Tris[3 * tri + 0] = 3;
-	_Tris[3 * tri + 1] = 2;
-	_Tris[3 * tri + 2] = 6;
-	tri++;
 	_Tris[3 * tri + 0] = 6;
-	_Tris[3 * tri + 1] = 7;
-	_Tris[3 * tri + 2] = 3;
+	_Tris[3 * tri + 1] = 5;
+	_Tris[3 * tri + 2] = 4;
 	tri++;
 	_Tris[3 * tri + 0] = 7;
 	_Tris[3 * tri + 1] = 6;
-	_Tris[3 * tri + 2] = 5;
-	tri++;
-	_Tris[3 * tri + 0] = 5;
-	_Tris[3 * tri + 1] = 4;
-	_Tris[3 * tri + 2] = 7;
-	tri++;
-	_Tris[3 * tri + 0] = 4;
-	_Tris[3 * tri + 1] = 5;
-	_Tris[3 * tri + 2] = 1;
-	tri++;
-	_Tris[3 * tri + 0] = 1;
-	_Tris[3 * tri + 1] = 0;
 	_Tris[3 * tri + 2] = 4;
 	tri++;
-	_Tris[3 * tri + 0] = 4;
-	_Tris[3 * tri + 1] = 0;
-	_Tris[3 * tri + 2] = 3;
+	_Tris[3 * tri + 0] = 8;
+	_Tris[3 * tri + 1] = 10;
+	_Tris[3 * tri + 2] = 9;
 	tri++;
-	_Tris[3 * tri + 0] = 3;
-	_Tris[3 * tri + 1] = 7;
-	_Tris[3 * tri + 2] = 4;
+	_Tris[3 * tri + 0] = 10;
+	_Tris[3 * tri + 1] = 11;
+	_Tris[3 * tri + 2] = 9;
 	tri++;
-	_Tris[3 * tri + 0] = 1;
-	_Tris[3 * tri + 1] = 5;
-	_Tris[3 * tri + 2] = 6;
+	_Tris[3 * tri + 0] = 13;
+	_Tris[3 * tri + 1] = 12;
+	_Tris[3 * tri + 2] = 15;
 	tri++;
-	_Tris[3 * tri + 0] = 6;
-	_Tris[3 * tri + 1] = 2;
-	_Tris[3 * tri + 2] = 1;
+	_Tris[3 * tri + 0] = 14;
+	_Tris[3 * tri + 1] = 15;
+	_Tris[3 * tri + 2] = 12;
+	tri++;
+	_Tris[3 * tri + 0] = 19;
+	_Tris[3 * tri + 1] = 17;
+	_Tris[3 * tri + 2] = 16;
+	tri++;
+	_Tris[3 * tri + 0] = 16;
+	_Tris[3 * tri + 1] = 18;
+	_Tris[3 * tri + 2] = 19;
+	tri++;
+	_Tris[3 * tri + 0] = 20;
+	_Tris[3 * tri + 1] = 21;
+	_Tris[3 * tri + 2] = 23;
+	tri++;
+	_Tris[3 * tri + 0] = 20;
+	_Tris[3 * tri + 1] = 23;
+	_Tris[3 * tri + 2] = 22;
 	tri++;
 	RecalculateBoundingBox();
+}
+
+void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1)
+{
 }
 
 void Mesh::DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const
@@ -189,7 +255,6 @@ vec3 Mesh::SetEEQs(vec3 v0, vec3 v1, vec3 v2)
 	return ret;
 }
 
-
 void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode, Material* material) const
 {
 #pragma region Points projection
@@ -230,236 +295,13 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode, Material* mat
 			{
 				for (auto i = t * group; i < (t + 1) * group; i++)
 				{
-					vec3 projectedVertices[3], vertices[3], colors[3], normals[3], texCoords[3];
-					projectedVertices[0] = proj[_Tris[3 * i + 0]];
-					projectedVertices[1] = proj[_Tris[3 * i + 1]];
-					projectedVertices[2] = proj[_Tris[3 * i + 2]];
-					vertices[0] = _Verts[_Tris[3 * i + 0]];
-					vertices[1] = _Verts[_Tris[3 * i + 1]];
-					vertices[2] = _Verts[_Tris[3 * i + 2]];
-					colors[0] = _Colors[_Tris[3 * i + 0]];
-					colors[1] = _Colors[_Tris[3 * i + 1]];
-					colors[2] = _Colors[_Tris[3 * i + 2]];
-					normals[0] = _Normals[_Tris[3 * i + 0]];
-					normals[1] = _Normals[_Tris[3 * i + 1]];
-					normals[2] = _Normals[_Tris[3 * i + 2]];
-					if(texCoords)
-					{
-						texCoords[0] = _TexCoords[_Tris[3 * i + 0]];
-						texCoords[1] = _TexCoords[_Tris[3 * i + 1]];
-						texCoords[2] = _TexCoords[_Tris[3 * i + 2]];
-					}else
-					{
-						texCoords[0] = vec3(0,0,0);
-						texCoords[1] = vec3(0, 0, 0);
-						texCoords[2] = vec3(0, 0, 0);
-					}
-					if (projectedVertices[0][0] == FLT_MAX || projectedVertices[1][0] == FLT_MAX || projectedVertices[2][0] == FLT_MAX) continue;
-					Bounds bound;
-					bound.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-					bound.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-					for (auto& pv : projectedVertices)
-					{
-						if (bound.MaxBound[0] < pv[0]) bound.MaxBound[0] = pv[0];
-						if (bound.MaxBound[1] < pv[1]) bound.MaxBound[1] = pv[1];
-						if (bound.MaxBound[2] < pv[2]) bound.MaxBound[2] = pv[2];
-						if (bound.MinBound[0] > pv[0]) bound.MinBound[0] = pv[0];
-						if (bound.MinBound[1] > pv[1]) bound.MinBound[1] = pv[1];
-						if (bound.MinBound[2] > pv[2]) bound.MinBound[2] = pv[2];
-					}
-					vec3 minClip(0.0f, 0.0f, 0.0f);
-					vec3 maxClip(static_cast<float>(fb->Width), static_cast<float>(fb->Height), 0.0f);
-					vec3 eeqs[3];
-					for (auto vi = 0; vi < 3; vi++)
-					{
-						eeqs[vi][0] = projectedVertices[(vi + 1) % 3][1] - projectedVertices[vi][1];
-						eeqs[vi][1] = projectedVertices[vi][0] - projectedVertices[(vi + 1) % 3][0];
-						eeqs[vi][2] = -projectedVertices[vi][0] * eeqs[vi][0] + projectedVertices[vi][1] * -eeqs[vi][1];
-						vec3 v2p(projectedVertices[(vi + 2) % 3][0], projectedVertices[(vi + 2) % 3][1], 1.0f);
-						if (v2p * eeqs[vi] < 0.0f)
-							eeqs[vi] = eeqs[vi] * -1.0f;
-					}
-					if (!bound.Clip(minClip, maxClip, 2))
-						continue;
-					const auto left = static_cast<int>(bound.MinBound[0] + 0.5f);
-					const auto right = static_cast<int>(bound.MaxBound[0] - 0.5f);
-					const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
-					const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
-
-					mat3 ssim;
-					ssim.SetColumn(0, vec3(projectedVertices[0][0], projectedVertices[1][0], projectedVertices[2][0]));
-					ssim.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
-					ssim.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
-					ssim = ssim.Inverted();
-
-
-
-					mat3 vs;
-					vs[0] = vertices[0];
-					vs[1] = vertices[1];
-					vs[2] = vertices[2];
-					mat3 cs;
-					cs[0] = colors[0];
-					cs[1] = colors[1];
-					cs[2] = colors[2];
-					mat3 nms;
-					nms[0] = normals[0];
-					nms[0] = normals[1];
-					nms[0] = normals[2];
-					mat3 ttcs;
-					nms[0] = texCoords[0];
-					nms[0] = texCoords[1];
-					nms[0] = texCoords[2];
-					
-					mat3 msim = GetModelSpaceInterpolationMat(vs, ppc);
-					vec3 denABC = msim[0] + msim[1] + msim[2];
-					mat3 colsNumABC = cs.Transpose() * msim;
-					mat3 nmsNumABC = nms.Transpose() * msim;
-					mat3 tcsNumABC = ttcs.Transpose() * msim;
-					mat3 colsABC = (ssim * cs).Transpose();
-					
-					vec3 z;
-					z = ssim * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
-					switch (mode)
-					{
-					case _FillMode_Z:
-						for (auto v = top; v <= bottom; v++)
-						{
-							for (auto u = left; u <= right; u++)
-							{
-								vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-								if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-									|| pix * eeqs[2] < 0.0f)
-									continue;
-								vec3 ccv(pix * z, pix * z, pix * z);
-								pix[2] = pix * z;
-								std::lock_guard<std::mutex> lock(writeMutex);
-								fb->SetZ(pix[0],pix[1], pix[2], ccv.GetColor());
-							}
-						}
-						break;
-					case _FillMode_Texture_Bilinear:
-						for (auto v = top; v <= bottom; v++)
-						{
-							for (auto u = left; u <= right; u++)
-							{
-								vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-								if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-									|| pix * eeqs[2] < 0.0f)
-									continue;
-								vec3 ctcs = (tcsNumABC * pix) / (denABC * pix);
-								pix[2] = pix * z;
-								std::lock_guard<std::mutex> lock(writeMutex);
-								fb->SetZ(pix[0], pix[1], pix[2], material->GetTexture()->Bilinear(ctcs[0], ctcs[1]).GetColor());
-							}
-						}
-						break;
-					case _FillMode_Vertex_Color_ModelSpaceInterpolation:
-						for (auto v = top; v <= bottom; v++)
-						{
-							for (auto u = left; u <= right; u++)
-							{
-								vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-								if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-									|| pix * eeqs[2] < 0.0f)
-									continue;
-								vec3 ccv = (colsNumABC * pix) / (denABC * pix);
-								pix[2] = pix * z;
-								std::lock_guard<std::mutex> lock(writeMutex);
-								fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
-							}
-						}
-						break;
-					case _FillMode_Vertex_Color_ScreenSpaceInterpolation:
-					default:
-						vec3 r, g, b;
-						r = ssim * vec3(colors[0][0], colors[1][0], colors[2][0]);
-						g = ssim * vec3(colors[0][1], colors[1][1], colors[2][1]);
-						b = ssim * vec3(colors[0][2], colors[1][2], colors[2][2]);
-						for (auto v = top; v <= bottom; v++)
-						{
-							for (auto u = left; u <= right; u++)
-							{
-								vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-								if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-									|| pix * eeqs[2] < 0.0f)
-									continue;
-								vec3 ccv(pix * r, pix * g, pix * b);
-								pix[2] = pix * z;
-								std::lock_guard<std::mutex> lock(writeMutex);
-								fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
-							}
-						}
-						break;
-					}
+					RasterizationHelper(i, fb, proj, ppc, mode, writeMutex, material);
 				}
 			}).share());
 	}
 	for (auto i = tSize * group; i < _TrisN; i++)
 	{
-		vec3 vertices[3], colors[3];
-		vertices[0] = proj[_Tris[3 * i + 0]];
-		vertices[1] = proj[_Tris[3 * i + 1]];
-		vertices[2] = proj[_Tris[3 * i + 2]];
-		colors[0] = _Colors[_Tris[3 * i + 0]];
-		colors[1] = _Colors[_Tris[3 * i + 1]];
-		colors[2] = _Colors[_Tris[3 * i + 2]];
-
-		if (vertices[0][0] == FLT_MAX || vertices[1][0] == FLT_MAX || vertices[2][0] == FLT_MAX) continue;
-		Bounds bound;
-		bound.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-		bound.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-		for (auto& pv : vertices)
-		{
-			if (bound.MaxBound[0] < pv[0]) bound.MaxBound[0] = pv[0];
-			if (bound.MaxBound[1] < pv[1]) bound.MaxBound[1] = pv[1];
-			if (bound.MaxBound[2] < pv[2]) bound.MaxBound[2] = pv[2];
-			if (bound.MinBound[0] > pv[0]) bound.MinBound[0] = pv[0];
-			if (bound.MinBound[1] > pv[1]) bound.MinBound[1] = pv[1];
-			if (bound.MinBound[2] > pv[2]) bound.MinBound[2] = pv[2];
-		}
-		vec3 minClip(0.0f, 0.0f, 0.0f);
-		vec3 maxClip(static_cast<float>(fb->Width), static_cast<float>(fb->Height), 0.0f);
-		vec3 eeqs[3];
-		for (auto vi = 0; vi < 3; vi++)
-		{
-			eeqs[vi][0] = vertices[(vi + 1) % 3][1] - vertices[vi][1];
-			eeqs[vi][1] = vertices[vi][0] - vertices[(vi + 1) % 3][0];
-			eeqs[vi][2] = -vertices[vi][0] * eeqs[vi][0] + vertices[vi][1] * -eeqs[vi][1];
-			vec3 v2p(vertices[(vi + 2) % 3][0], vertices[(vi + 2) % 3][1], 1.0f);
-			if (v2p * eeqs[vi] < 0.0f)
-				eeqs[vi] = eeqs[vi] * -1.0f;
-		}
-		if (!bound.Clip(minClip, maxClip, 2))
-			continue;
-		const auto left = static_cast<int>(bound.MinBound[0] + 0.5f);
-		const auto right = static_cast<int>(bound.MaxBound[0] - 0.5f);
-		const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
-		const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
-
-		mat3 mat;
-		mat.SetColumn(0, vec3(vertices[0][0], vertices[1][0], vertices[2][0]));
-		mat.SetColumn(1, vec3(vertices[0][1], vertices[1][1], vertices[2][1]));
-		mat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
-		mat = mat.Inverted();
-		const auto r = mat * vec3(colors[0][0], colors[1][0], colors[2][0]);
-		const auto g = mat * vec3(colors[0][1], colors[1][1], colors[2][1]);
-		const auto b = mat * vec3(colors[0][2], colors[1][2], colors[2][2]);
-		const auto z = mat * vec3(vertices[0][2], vertices[1][2], vertices[2][2]);
-
-		for (auto v = top; v <= bottom; v++)
-		{
-			for (auto u = left; u <= right; u++)
-			{
-				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-					|| pix * eeqs[2] < 0.0f)
-					continue;
-				vec3 ccv(pix * r, pix * g, pix * b);
-				pix[2] = pix * z;
-				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
-			}
-		}
+		RasterizationHelper(i, fb, proj, ppc, mode, writeMutex, material);
 	}
 	for (auto& result : results)
 	{
@@ -575,7 +417,6 @@ void Mesh::SetCenter(vec3 center)
 	Translate(center - currCenter);
 }
 
-
 void Mesh::Rotate(vec3 aO, vec3 aDir, float theta)
 {
 	std::vector<shared_future<void>> results;
@@ -633,4 +474,197 @@ void Mesh::Scale(vec3 value)
 		results[i].wait();
 	}
 	SetCenter(center);
+}
+
+inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* ppc, FillMode mode, std::mutex& writeMutex, Material* material) const
+{
+	vec3 projectedVertices[3], vertices[3], colors[3], normals[3], texCoords[3];
+	projectedVertices[0] = proj[_Tris[3 * i + 0]];
+	projectedVertices[1] = proj[_Tris[3 * i + 1]];
+	projectedVertices[2] = proj[_Tris[3 * i + 2]];
+	vertices[0] = _Verts[_Tris[3 * i + 0]];
+	vertices[1] = _Verts[_Tris[3 * i + 1]];
+	vertices[2] = _Verts[_Tris[3 * i + 2]];
+	colors[0] = _Colors[_Tris[3 * i + 0]];
+	colors[1] = _Colors[_Tris[3 * i + 1]];
+	colors[2] = _Colors[_Tris[3 * i + 2]];
+	normals[0] = _Normals[_Tris[3 * i + 0]];
+	normals[1] = _Normals[_Tris[3 * i + 1]];
+	normals[2] = _Normals[_Tris[3 * i + 2]];
+	if (HasTexCoords)
+	{
+		texCoords[0] = _TexCoords[_Tris[3 * i + 0]];
+		texCoords[1] = _TexCoords[_Tris[3 * i + 1]];
+		texCoords[2] = _TexCoords[_Tris[3 * i + 2]];
+	}
+	else
+	{
+		texCoords[0] = vec3(0, 0, 0);
+		texCoords[1] = vec3(0, 0, 0);
+		texCoords[2] = vec3(0, 0, 0);
+	}
+	if (projectedVertices[0][0] == FLT_MAX || projectedVertices[1][0] == FLT_MAX || projectedVertices[2][0] == FLT_MAX) return;
+	Bounds bound;
+	bound.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	bound.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+	for (auto& pv : projectedVertices)
+	{
+		if (bound.MaxBound[0] < pv[0]) bound.MaxBound[0] = pv[0];
+		if (bound.MaxBound[1] < pv[1]) bound.MaxBound[1] = pv[1];
+		if (bound.MaxBound[2] < pv[2]) bound.MaxBound[2] = pv[2];
+		if (bound.MinBound[0] > pv[0]) bound.MinBound[0] = pv[0];
+		if (bound.MinBound[1] > pv[1]) bound.MinBound[1] = pv[1];
+		if (bound.MinBound[2] > pv[2]) bound.MinBound[2] = pv[2];
+	}
+	vec3 minClip(0.0f, 0.0f, 0.0f);
+	vec3 maxClip(static_cast<float>(fb->Width), static_cast<float>(fb->Height), 0.0f);
+	vec3 eeqs[3];
+	for (auto vi = 0; vi < 3; vi++)
+	{
+		eeqs[vi][0] = projectedVertices[(vi + 1) % 3][1] - projectedVertices[vi][1];
+		eeqs[vi][1] = projectedVertices[vi][0] - projectedVertices[(vi + 1) % 3][0];
+		eeqs[vi][2] = -projectedVertices[vi][0] * eeqs[vi][0] + projectedVertices[vi][1] * -eeqs[vi][1];
+		vec3 v2p(projectedVertices[(vi + 2) % 3][0], projectedVertices[(vi + 2) % 3][1], 1.0f);
+		if (v2p * eeqs[vi] < 0.0f)
+			eeqs[vi] = eeqs[vi] * -1.0f;
+	}
+	if (!bound.Clip(minClip, maxClip, 2))
+		return;
+	const auto left = static_cast<int>(bound.MinBound[0] + 0.5f);
+	const auto right = static_cast<int>(bound.MaxBound[0] - 0.5f);
+	const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
+	const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
+
+	mat3 ssim;
+	ssim.SetColumn(0, vec3(projectedVertices[0][0], projectedVertices[1][0], projectedVertices[2][0]));
+	ssim.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
+	ssim.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
+	ssim = ssim.Inverted();
+
+
+
+	mat3 vs;
+	vs[0] = vertices[0];
+	vs[1] = vertices[1];
+	vs[2] = vertices[2];
+	mat3 cs;
+	cs[0] = colors[0];
+	cs[1] = colors[1];
+	cs[2] = colors[2];
+	mat3 nms;
+	nms[0] = normals[0];
+	nms[1] = normals[1];
+	nms[2] = normals[2];
+	mat3 ttcs;
+	ttcs[0] = texCoords[0];
+	ttcs[1] = texCoords[1];
+	ttcs[2] = texCoords[2];
+
+	mat3 msim = GetModelSpaceInterpolationMat(vs, ppc);
+	vec3 denABC = msim[0] + msim[1] + msim[2];
+	mat3 colsNumABC = cs.Transpose() * msim;
+	mat3 nmsNumABC = nms.Transpose() * msim;
+	mat3 tcsNumABC = ttcs.Transpose() * msim;
+	mat3 colsABC = (ssim * cs).Transpose();
+
+	vec3 z;
+	z = ssim * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
+	switch (mode)
+	{
+	case _FillMode_Z:
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
+					|| pix * eeqs[2] < 0.0f)
+					continue;
+				vec3 ccv(pix * z, pix * z, pix * z);
+				pix[2] = pix * z;
+				std::lock_guard<std::mutex> lock(writeMutex);
+				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
+			}
+		}
+		break;
+	case _FillMode_Texture_Nearest:
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
+					|| pix * eeqs[2] < 0.0f)
+					continue;
+				vec3 ctcs = (tcsNumABC * pix) / (denABC * pix);
+				pix[2] = pix * z;
+				std::lock_guard<std::mutex> lock(writeMutex);
+				if (material != nullptr && material->GetTexture() != nullptr)
+					fb->SetZ(pix[0], pix[1], pix[2], material->GetTexture()->Nearest(ctcs[0], ctcs[1]));
+				else
+				{
+					fb->SetZ(pix[0], pix[1], pix[2], vec3(0.5, 0, 0.5).GetColor());
+				}
+			}
+		}
+		break;
+	case _FillMode_Texture_Bilinear:
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
+					|| pix * eeqs[2] < 0.0f)
+					continue;
+				vec3 ctcs = (tcsNumABC * pix) / (denABC * pix);
+				pix[2] = pix * z;
+				std::lock_guard<std::mutex> lock(writeMutex);
+				if (material != nullptr && material->GetTexture() != nullptr)
+					fb->SetZ(pix[0], pix[1], pix[2], material->GetTexture()->Bilinear(ctcs[0], ctcs[1]));
+				else
+				{
+					fb->SetZ(pix[0], pix[1], pix[2], vec3(0.5, 0, 0.5).GetColor());
+				}
+			}
+		}
+		break;
+	case _FillMode_Vertex_Color_ModelSpaceInterpolation:
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
+					|| pix * eeqs[2] < 0.0f)
+					continue;
+				vec3 ccv = (colsNumABC * pix) / (denABC * pix);
+				pix[2] = pix * z;
+				std::lock_guard<std::mutex> lock(writeMutex);
+				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
+			}
+		}
+		break;
+	case _FillMode_Vertex_Color_ScreenSpaceInterpolation:
+	default:
+		vec3 r, g, b;
+		r = ssim * vec3(colors[0][0], colors[1][0], colors[2][0]);
+		g = ssim * vec3(colors[0][1], colors[1][1], colors[2][1]);
+		b = ssim * vec3(colors[0][2], colors[1][2], colors[2][2]);
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
+					|| pix * eeqs[2] < 0.0f)
+					continue;
+				vec3 ccv(pix * r, pix * g, pix * b);
+				pix[2] = pix * z;
+				std::lock_guard<std::mutex> lock(writeMutex);
+				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
+			}
+		}
+		break;
+	}
 }

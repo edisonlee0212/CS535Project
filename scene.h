@@ -5,10 +5,14 @@
 #include "Mesh.h"
 #include "ThreadPool.h"
 #include <vector>
+
+#include "Model.h"
+
 class Scene
 {
 	static ThreadPool _ThreadPool;
 	vector<Mesh*> _Meshes;
+	vector<Model*> _Models;
 	Camera* _Camera;
 	FrameBuffer* _FrameBuffer;
 	GUI* gui;
