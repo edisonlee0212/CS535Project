@@ -6,10 +6,17 @@
 #include "ThreadPool.h"
 #include <vector>
 
+
+#include "Light.h"
 #include "Model.h"
 
 class Scene
 {
+	friend class Mesh;
+	const static float _AmbientLight;
+	static vector<DirectionalLight> _DirectionalLights;
+	static vector<PointLight> _PointLights;
+	
 	static ThreadPool _ThreadPool;
 	vector<Mesh*> _Meshes;
 	vector<Model*> _Models;

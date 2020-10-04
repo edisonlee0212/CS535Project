@@ -72,7 +72,7 @@ vec3 vec3::operator^(vec3 v2)
 }
 
 
-vec3 vec3::operator*(float scf) const
+vec3 vec3::operator*(float scf)
 {
 	vec3 ret(*this);
 	ret[0] *= scf;

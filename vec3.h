@@ -86,6 +86,12 @@ struct vec2
 
 struct vec3
 {
+	vec3(float val)
+	{
+		value[0] = val;
+		value[1] = val;
+		value[2] = val;
+	}
 	vec3()
 	{
 		value[0] = 0;
@@ -112,7 +118,7 @@ struct vec3
 	vec3 operator-(vec3 v1);
 	friend ostream& operator<<(ostream& os, vec3 v);
 	float operator*(vec3 v1);
-	vec3 operator*(float scf) const;
+	vec3 operator*(float scf);
 	float Length();
 	vec3 Normalized() const;
 	vec3 operator/(float scf) const;
@@ -121,4 +127,13 @@ struct vec3
 	unsigned int GetColor();
 	vec3 RotatePoint(vec3 aO, vec3 axisDir, float theta);
 	vec3 RotateVector(vec3 axisDir, float theta);
+	vec3 Multiply(vec3& other)
+	{
+		return vec3(value[0] * other[0], value[1] * other[1], value[2] * other[2]);
+	}
+	vec3 Reflect(vec3& normal)
+	{
+		return *this - normal * (normal * *this) * 2.0f;
+	}
 };
+

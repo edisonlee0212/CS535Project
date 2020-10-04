@@ -65,28 +65,6 @@ void FrameBuffer::KeyboardHandle()
 	}
 }
 
-
-void FrameBuffer::Set(int u, int v, unsigned int color)
-{
-	if (u < 0 || u > Width - 1 || v < 0 || v > Height - 1)
-		return;
-
-	Pixels[(Height - 1 - v) * Width + u] = color;
-}
-
-void FrameBuffer::SetZ(int u, int v, float z, unsigned color)
-{
-	if (u < 0 || v < 0 || u > Width - 1 || v > Height - 1)
-		return;
-
-	int uv = (Height - 1 - v) * Width + u;
-	if (ZBuffer[uv] > z)
-		return;
-	ZBuffer[uv] = z;
-
-	Set(u, v, color);
-}
-
 void FrameBuffer::SetBGR(unsigned int bgr)
 {
 	for (int uv = 0; uv < Width * Height; uv++)
@@ -169,15 +147,15 @@ void FrameBuffer::SetChecker(unsigned int col0, unsigned int col1, int csize)
 	}
 }
 
-int FrameBuffer::Farther(int u, int v, float currz)
+bool FrameBuffer::Farther(int u, int v, float z)
 {
 	if (u < 0 || u > Width - 1 || v < 0 || v > Height - 1)
-		return 1;
+		return false;
 	int uv = (Height - 1 - v) * Width + u;
-	if (currz < ZBuffer[uv])
-		return 1;
-	ZBuffer[uv] = currz;
-	return 0;
+	if (z < ZBuffer[uv])
+		return false;
+	ZBuffer[uv] = z;
+	return true;
 }
 
 void FrameBuffer::Draw2DSegment(vec3 p0, vec3 c0, vec3 p1, vec3 c1)

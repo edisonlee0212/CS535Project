@@ -31,7 +31,7 @@ class Mesh
 	vector<unsigned> _Tris;
 	int _TrisN;
 
-	inline void RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* ppc, FillMode mode, std::mutex& writeMutex, Material* material) const;
+	inline void RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* camera, FillMode mode, std::mutex& writeMutex, Material* material, bool calculateLighting) const;
 public:
 	bool Enabled;
 	bool HasColors;
@@ -42,12 +42,13 @@ public:
 	}
 
 	void RecalculateBoundingBox();
+	void RecalculateNormals();
 	void SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned int color1);
-	void SetToQuad(vec3 cc, float sideLength, unsigned int color0, unsigned int color1);
+	void SetToQuad(vec3 cc, float sideLength, unsigned int color0, unsigned int color1, float tiledFactor = 1.0f);
 	void Allocate(int vertsN, int trisN);
 	void DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
 	void DrawWireFrame(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
-	void DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode = _FillMode_Vertex_Color_ScreenSpaceInterpolation, Material* material = nullptr) const;
+	void DrawFilled(FrameBuffer* fb, Camera* camera, FillMode mode = _FillMode_Vertex_Color_ScreenSpaceInterpolation, Material* material = nullptr, bool receiveLight = false) const;
 	void LoadBin(char* filename);
 	static vec3 SetEEQs(vec3 v0, vec3 v1, vec3 v2);
 	vec3 GetCenter();

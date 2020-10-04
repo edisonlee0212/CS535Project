@@ -63,6 +63,30 @@ void Mesh::RecalculateBoundingBox()
 	}
 }
 
+void Mesh::RecalculateNormals()
+{
+	std::vector<std::vector<vec3>> normalLists;
+	normalLists.resize(_VertsN);
+	for (size_t i = 0; i < _TrisN; i++) {
+		auto v1 = _Verts.at(_Tris.at(3 * i));
+		auto v2 = _Verts.at(_Tris.at(3 * i + 1));
+		auto v3 = _Verts.at(_Tris.at(3 * i + 2));
+		auto normal = ((v1 - v2) ^ (v1 - v3)).Normalized();
+		normalLists[_Tris.at(3 * i)].push_back(normal);
+		normalLists[_Tris.at(3 * i + 1)].push_back(normal);
+		normalLists[_Tris.at(3 * i + 2)].push_back(normal);
+	}
+	_Normals.resize(_VertsN);
+	for (auto i = 0; i < _VertsN; i++) {
+		vec3 normal = vec3(0.0f, 0.0f, 0.0f);
+		for (auto j : normalLists[i]) {
+			normal = normal + j;
+		}
+		_Normals[i] = normal.Normalized();
+	}
+	HasNormals = true;
+}
+
 void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned int color1)
 {
 	_VertsN = 24;
@@ -142,7 +166,7 @@ void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned in
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, -sideLength / 2.0f);
 	_TexCoords[vi] = vec2(1, 1);
 	vi++;
-	
+
 	//1458
 	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
 	_TexCoords[vi] = vec2(0, 0);
@@ -156,7 +180,7 @@ void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned in
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, -sideLength / 2.0f);
 	_TexCoords[vi] = vec2(1, 1);
 	vi++;
-	
+
 	int tri = 0;
 	_Tris[3 * tri + 0] = 0;
 	_Tris[3 * tri + 1] = 1;
@@ -207,9 +231,12 @@ void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned in
 	_Tris[3 * tri + 2] = 22;
 	tri++;
 	RecalculateBoundingBox();
+	RecalculateNormals();
+
+
 }
 
-void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1)
+void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1, float tiledFactor)
 {
 	_VertsN = 4;
 	_TrisN = 2;
@@ -224,13 +251,13 @@ void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1
 	_TexCoords[vi] = vec2(0, 0);
 	vi++;
 	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
-	_TexCoords[vi] = vec2(0, 1);
+	_TexCoords[vi] = vec2(0, tiledFactor);
 	vi++;
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
-	_TexCoords[vi] = vec2(1, 1);
+	_TexCoords[vi] = vec2(tiledFactor, tiledFactor);
 	vi++;
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
-	_TexCoords[vi] = vec2(1, 0);
+	_TexCoords[vi] = vec2(tiledFactor, 0);
 	vi++;
 
 	int tri = 0;
@@ -242,6 +269,7 @@ void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1
 	_Tris[3 * tri + 1] = 3;
 	_Tris[3 * tri + 2] = 0;
 	tri++;
+	RecalculateNormals();
 }
 
 void Mesh::DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const
@@ -286,54 +314,69 @@ vec3 Mesh::SetEEQs(vec3 v0, vec3 v1, vec3 v2)
 	return ret;
 }
 
-void Mesh::DrawFilled(FrameBuffer* fb, Camera* ppc, FillMode mode, Material* material) const
+void Mesh::DrawFilled(FrameBuffer* fb, Camera* camera, FillMode mode, Material* material, bool receiveLight) const
 {
-#pragma region Points projection
 	vector<vec3> proj;
 	proj.resize(_VertsN);
 	std::vector<shared_future<void>> results;
 	auto tSize = Scene::GetThreadPool()->Size();
 	size_t group = _VertsN / tSize;
 	results.reserve(tSize);
+#pragma region Points projection
 	for (auto t = 0; t < tSize; t++)
 	{
-		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &ppc, &proj](int id)
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &camera, &proj](int id)
 			{
 				for (auto i = t * group; i < (t + 1) * group; i++)
 				{
-					ppc->Project(_Verts[i], proj[i]);
+					camera->Project(_Verts[i], proj[i]);
 				}
 			}).share());
 	}
 	for (auto i = tSize * group; i < _VertsN; i++)
 	{
-		ppc->Project(_Verts[i], proj[i]);
+		camera->Project(_Verts[i], proj[i]);
 	}
 	for (auto& result : results)
 	{
 		result.wait();
 	}
 #pragma endregion
+
 #pragma region SetColor
 	results.clear();
 	tSize = Scene::GetThreadPool()->Size();
 	group = _TrisN / tSize;
 	results.reserve(tSize);
 	std::mutex writeMutex;
+	/*for(auto i = 0; i < _TrisN; i++)
+	{
+		results.push_back(Scene::GetThreadPool()->Push([i, this, &proj, &fb, &writeMutex, mode, &camera, &material](int id)
+		{
+			RasterizationHelper(i, fb, proj, camera, mode, writeMutex, material);
+		}).share());
+	}
+	*/
+
 	for (auto t = 0; t < tSize; t++)
 	{
-		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &fb, &writeMutex, mode, &ppc, &material](int id)
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &fb, &writeMutex, mode, &camera, &material, receiveLight](int id)
 			{
 				for (auto i = t * group; i < (t + 1) * group; i++)
 				{
-					RasterizationHelper(i, fb, proj, ppc, mode, writeMutex, material);
+					RasterizationHelper(i, fb, proj, camera, mode, writeMutex, material, receiveLight);
 				}
 			}).share());
 	}
-	for (auto i = tSize * group; i < _TrisN; i++)
-	{
-		RasterizationHelper(i, fb, proj, ppc, mode, writeMutex, material);
-	}
+
+	results.push_back(Scene::GetThreadPool()->Push([tSize, group, this, &proj, &fb, &writeMutex, mode, &camera, &material, receiveLight](int id) {
+		for (auto i = tSize * group; i < _TrisN; i++)
+		{
+			RasterizationHelper(i, fb, proj, camera, mode, writeMutex, material, receiveLight);
+		}
+		}).share());
+
+
 	for (auto& result : results)
 	{
 		result.wait();
@@ -358,11 +401,14 @@ void Mesh::LoadBin(char* filename)
 		cerr << "INTERNAL ERROR: there should always be vertex value data" << endl;
 		return;
 	}
+	HasColors = false;
+	HasNormals = false;
+	HasTexCoords = false;
 
 	_Verts.resize(_VertsN);
 
 	ifs.read(&yn, 1); // cols 3 floats
-	
+
 	if (yn == 'y')
 	{
 		HasColors = true;
@@ -370,7 +416,7 @@ void Mesh::LoadBin(char* filename)
 	}
 
 	ifs.read(&yn, 1); // normals 3 floats
-	
+
 	if (yn == 'y')
 	{
 		HasNormals = true;
@@ -378,7 +424,7 @@ void Mesh::LoadBin(char* filename)
 	}
 
 	ifs.read(&yn, 1); // texture coordinates 2 floats
-	
+
 	if (yn == 'y')
 	{
 		HasTexCoords = true;
@@ -399,7 +445,7 @@ void Mesh::LoadBin(char* filename)
 		ifs.read((char*)_TexCoords.data(), 2 * _VertsN * sizeof(float)); // load texture coordinates
 
 	ifs.read((char*)&_TrisN, sizeof(int));
-	
+
 	_Tris.resize(3 * _TrisN);
 	ifs.read((char*)_Tris.data(), 3 * _TrisN * sizeof(unsigned int)); // read triangles
 
@@ -409,6 +455,7 @@ void Mesh::LoadBin(char* filename)
 	cerr << "      value " << (HasColors ? "rgb " : "") << (HasNormals ? "nxnynz " : "") << (HasTexCoords ? "tcstct " : "") <<
 		endl;
 	RecalculateBoundingBox();
+	RecalculateNormals();
 }
 
 vec3 Mesh::GetCenter()
@@ -461,12 +508,14 @@ void Mesh::Rotate(vec3 aO, vec3 aDir, float theta)
 				for (auto i = t * group; i < (t + 1) * group; i++)
 				{
 					_Verts[i] = _Verts[i].RotatePoint(aO, aDir, theta);
+					_Normals[i] = _Normals[i].RotateVector(aDir, theta);
 				}
 			}).share());
 	}
 	for (auto i = tSize * group; i < _VertsN; i++)
 	{
 		_Verts[i] = _Verts[i].RotatePoint(aO, aDir, theta);
+		_Normals[i] = _Normals[i].RotateVector(aDir, theta);
 	}
 	for (size_t i = 0; i < results.size(); i++) {
 		results[i].wait();
@@ -507,7 +556,7 @@ void Mesh::Scale(vec3 value)
 	SetCenter(center);
 }
 
-inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* ppc, FillMode mode, std::mutex& writeMutex, Material* material) const
+inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* camera, FillMode mode, std::mutex& writeMutex, Material* material, bool calculateLighting) const
 {
 	vec3 projectedVertices[3], vertices[3], colors[3], normals[3], texCoords[3];
 	projectedVertices[0] = proj[_Tris[3 * i + 0]];
@@ -566,11 +615,12 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 	const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
 	const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
 
-	mat3 ssim;
-	ssim.SetColumn(0, vec3(projectedVertices[0][0], projectedVertices[1][0], projectedVertices[2][0]));
-	ssim.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
-	ssim.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
-	ssim = ssim.Inverted();
+
+	mat3 screenSpaceInterpolationMat;
+	screenSpaceInterpolationMat.SetColumn(0, vec3(projectedVertices[0][0], projectedVertices[1][0], projectedVertices[2][0]));
+	screenSpaceInterpolationMat.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
+	screenSpaceInterpolationMat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
+	screenSpaceInterpolationMat = screenSpaceInterpolationMat.Inverted();
 
 
 
@@ -591,15 +641,26 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 	ttcs[1] = texCoords[1];
 	ttcs[2] = texCoords[2];
 
-	mat3 msim = GetModelSpaceInterpolationMat(vs, ppc);
-	vec3 denABC = msim[0] + msim[1] + msim[2];
-	mat3 colsNumABC = cs.Transpose() * msim;
-	mat3 nmsNumABC = nms.Transpose() * msim;
-	mat3 tcsNumABC = ttcs.Transpose() * msim;
-	mat3 colsABC = (ssim * cs).Transpose();
+	mat3 modelSpaceInterpolationMat = GetModelSpaceInterpolationMat(vs, camera);
+	vec3 densityABC = modelSpaceInterpolationMat[0] + modelSpaceInterpolationMat[1] + modelSpaceInterpolationMat[2];
+	mat3 vertexPosABC = vs.Transpose() * modelSpaceInterpolationMat;
+	mat3 colorsABC = cs.Transpose() * modelSpaceInterpolationMat;
+	mat3 normalsABC = nms.Transpose() * modelSpaceInterpolationMat;
+	mat3 texCoordABC = ttcs.Transpose() * modelSpaceInterpolationMat;
 
 	vec3 z;
-	z = ssim * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
+	vec3 r, g, b;
+	if (mode == _FillMode_Vertex_Color_ScreenSpaceInterpolation)
+	{
+		r = screenSpaceInterpolationMat * vec3(colors[0][0], colors[1][0], colors[2][0]);
+		g = screenSpaceInterpolationMat * vec3(colors[0][1], colors[1][1], colors[2][1]);
+		b = screenSpaceInterpolationMat * vec3(colors[0][2], colors[1][2], colors[2][2]);
+	}
+
+	z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
+
+	vec3 viewPos = camera->Center;
+
 	switch (mode)
 	{
 	case _FillMode_Z:
@@ -614,49 +675,11 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				vec3 ccv(pix * z, pix * z, pix * z);
 				pix[2] = pix * z;
 				std::lock_guard<std::mutex> lock(writeMutex);
-				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
-			}
-		}
-		break;
-	case _FillMode_Texture_Nearest:
-		for (auto v = top; v <= bottom; v++)
-		{
-			for (auto u = left; u <= right; u++)
-			{
-				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-					|| pix * eeqs[2] < 0.0f)
-					continue;
-				vec3 ctcs = (tcsNumABC * pix) / (denABC * pix);
-				pix[2] = pix * z;
-				std::lock_guard<std::mutex> lock(writeMutex);
-				if (material != nullptr && material->GetTexture() != nullptr)
-					fb->SetZ(pix[0], pix[1], pix[2], material->GetTexture()->Nearest(ctcs[0], ctcs[1]));
-				else
+				if (!fb->Farther(pix[0], pix[1], pix[2]))
 				{
-					fb->SetZ(pix[0], pix[1], pix[2], vec3(0.5, 0, 0.5).GetColor());
-				}
-			}
-		}
-		break;
-	case _FillMode_Texture_Bilinear:
-		for (auto v = top; v <= bottom; v++)
-		{
-			for (auto u = left; u <= right; u++)
-			{
-				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-					|| pix * eeqs[2] < 0.0f)
 					continue;
-				vec3 ctcs = (tcsNumABC * pix) / (denABC * pix);
-				pix[2] = pix * z;
-				std::lock_guard<std::mutex> lock(writeMutex);
-				if (material != nullptr && material->GetTexture() != nullptr)
-					fb->SetZ(pix[0], pix[1], pix[2], material->GetTexture()->Bilinear(ctcs[0], ctcs[1]));
-				else
-				{
-					fb->SetZ(pix[0], pix[1], pix[2], vec3(0.5, 0, 0.5).GetColor());
 				}
+				fb->Set(pix[0], pix[1], ccv.GetColor());
 			}
 		}
 		break;
@@ -669,19 +692,18 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
 					|| pix * eeqs[2] < 0.0f)
 					continue;
-				vec3 ccv = (colsNumABC * pix) / (denABC * pix);
+				vec3 ccv = (colorsABC * pix) / (densityABC * pix);
 				pix[2] = pix * z;
 				std::lock_guard<std::mutex> lock(writeMutex);
-				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
+				if (!fb->Farther(pix[0], pix[1], pix[2]))
+				{
+					continue;
+				}
+				fb->Set(pix[0], pix[1], ccv.GetColor());
 			}
 		}
 		break;
 	case _FillMode_Vertex_Color_ScreenSpaceInterpolation:
-	default:
-		vec3 r, g, b;
-		r = ssim * vec3(colors[0][0], colors[1][0], colors[2][0]);
-		g = ssim * vec3(colors[0][1], colors[1][1], colors[2][1]);
-		b = ssim * vec3(colors[0][2], colors[1][2], colors[2][2]);
 		for (auto v = top; v <= bottom; v++)
 		{
 			for (auto u = left; u <= right; u++)
@@ -693,7 +715,80 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				vec3 ccv(pix * r, pix * g, pix * b);
 				pix[2] = pix * z;
 				std::lock_guard<std::mutex> lock(writeMutex);
-				fb->SetZ(pix[0], pix[1], pix[2], ccv.GetColor());
+				if (!fb->Farther(pix[0], pix[1], pix[2]))
+				{
+					continue;
+				}
+				fb->Set(pix[0], pix[1], ccv.GetColor());
+			}
+		}
+		break;
+	case _FillMode_Texture_Nearest:
+	case _FillMode_Texture_Bilinear:
+	case _FillMode_Texture_Trilinear:
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pixel(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pixel * eeqs[0] < 0.0f || pixel * eeqs[1] < 0.0f
+					|| pixel * eeqs[2] < 0.0f)
+					continue;
+				vec3 texCoord = (texCoordABC * pixel) / (densityABC * pixel);
+				vec3 normal = (normalsABC * pixel) / (densityABC * pixel);
+
+				/*vec3 normal(pixel * (ssim * vec3(normals[0][0], normals[1][0], normals[2][0])),
+					pixel * (ssim * vec3(normals[0][1], normals[1][1], normals[2][1])),
+					pixel * (ssim * vec3(normals[0][2], normals[1][2], normals[2][2])));
+
+				vec3 texCoord(pixel * (ssim * vec3(texCoords[0][0], texCoords[1][0], texCoords[2][0])),
+					pixel * (ssim * vec3(texCoords[0][1], texCoords[1][1], texCoords[2][1])),
+					pixel * (ssim * vec3(texCoords[0][2], texCoords[1][2], texCoords[2][2])));
+				*/
+				pixel[2] = pixel * z;
+				std::lock_guard<std::mutex> lock(writeMutex);
+				if (material != nullptr && material->GetTexture() != nullptr) {
+					if (material->GetTexture()->IsTransparent(texCoord[0], texCoord[1])) continue;
+					if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
+					unsigned surfaceColor = 0;
+					switch (mode)
+					{
+					case _FillMode_Texture_Nearest:
+						surfaceColor = material->GetTexture()->Nearest(texCoord[0], texCoord[1]);
+						break;
+					case _FillMode_Texture_Bilinear:
+						surfaceColor = material->GetTexture()->Bilinear(texCoord[0], texCoord[1]);
+						break;
+					case _FillMode_Texture_Trilinear:
+						surfaceColor = material->GetTexture()->Trilinear(texCoord[0], texCoord[1], pixel[2]);
+						break;
+					}
+
+					if (calculateLighting)
+					{
+						vec3 surfaceColV3;
+						surfaceColV3.SetFromColor(surfaceColor);
+						vec3 fragPos = ((vertexPosABC * pixel) / (densityABC * pixel)).Normalized();
+						vec3 viewDir = (viewPos - fragPos).Normalized();
+
+						vec3 result = vec3(Scene::_AmbientLight);
+						for (auto& dl : Scene::_DirectionalLights)
+						{
+							vec3 lightDir = (vec3(0, 0, 0) - dl.direction).Normalized();
+							vec3 diffuse = dl.diffuse * max(normal * lightDir, 0.0f);
+							vec3 reflectDir = (vec3(0, 0, 0) - lightDir).Reflect(normal);
+							vec3 specular = dl.specular * pow(max((viewDir * reflectDir), 0.0f), material->_Shininess);
+							result = result + diffuse + specular;
+						}
+						surfaceColor = surfaceColV3.Multiply(result).GetColor();
+
+					}
+					fb->SetZ(pixel[0], pixel[1], pixel[2], surfaceColor);
+				}
+				else
+				{
+					fb->Set(pixel[0], pixel[1], vec3(0.5, 0, 0.5).GetColor());
+				}
 			}
 		}
 		break;

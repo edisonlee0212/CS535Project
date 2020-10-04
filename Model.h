@@ -4,13 +4,15 @@
 class Model
 {
 	Mesh _Mesh;
+	bool _ReceiveLight;
 	std::shared_ptr<Material> _Material;
 public:
 	bool Enabled;
-	Model(std::shared_ptr<Material> material, bool enabled = true)
+	Model(std::shared_ptr<Material> material, bool enabled = true, bool receiveLight = false)
 	{
 		Enabled = enabled;
 		_Material = material;
+		_ReceiveLight = receiveLight;
 	}
 	void SetCenter(vec3 value)
 	{
@@ -24,7 +26,7 @@ public:
 	std::shared_ptr<Material> GetMaterial() const { return _Material; }
 	void Draw(FrameBuffer* fb, Camera* camera, FillMode mode)
 	{
-		_Mesh.DrawFilled(fb, camera, mode, _Material.get());
+		_Mesh.DrawFilled(fb, camera, mode, _Material.get(), _ReceiveLight);
 	}
 };
 

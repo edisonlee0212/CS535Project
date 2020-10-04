@@ -3,12 +3,13 @@
 #include <tiffio.h>
 #include <vector>
 
-
+#include <stb_image.h>
 #include "vec3.h"
 
 class Texture
 {
 	vector<unsigned> _Pixels; // pixel array
+	vector<bool> _Transparency;
 	int _Width, _Height;
 public:
 	Texture()
@@ -21,6 +22,27 @@ public:
 		return _Pixels[(_Height - v - 1) * _Width + u];
 	}
 
+	void SetAllTransparency(bool value)
+	{
+		for (auto& i : _Transparency) i = value;
+	}
+
+	void SetTransparency(int u, int v, bool value)
+	{
+		_Transparency[(_Height - v - 1) * _Width + u] = value;
+	}
+
+	void SetTransparencyRange(int u1, int u2, int v1, int v2, bool value)
+	{
+		for(int u = u1; u < u2; u++)
+		{
+			for(int v = v1; v < v2; v++)
+			{
+				_Transparency[(_Height - v - 1) * _Width + u] = value;
+			}
+		}
+	}
+	
 	Texture(int width, int height)
 	{
 		Resize(width, height);
@@ -30,6 +52,7 @@ public:
 		_Width = width;
 		_Height = height;
 		_Pixels.resize(_Width * _Height);
+		_Transparency.resize(_Width * _Height);
 	}
 	void LoadTiff(std::string fileName)
 	{
@@ -54,6 +77,7 @@ public:
 		}
 
 		TIFFClose(in);
+		SetAllTransparency(false);
 	}
 	void SaveAsTiff(std::string fileName) const
 	{
@@ -95,15 +119,14 @@ public:
 	{
 		float nearX = _Width * x;
 		float nearY = _Height * y;
-		if (nearX > _Width - 0.5f) nearX = static_cast<float>(_Width) - 0.51f;
-		if (nearX < 0.5f) nearX = 0.51f;
-		if (nearY > _Height - 0.5f) nearY = static_cast<float>(_Height) - 0.51f;
-		if (nearY < 0.5f) nearY = 0.51f;
+
+		if (nearY < 0.5f) nearY = 0.5f;
 		int u = static_cast<int>(nearX - 0.5f);
 		int v = static_cast<int>(nearY - 0.5f);
 		float du = nearX - (static_cast<float>(u) + 0.5f);
 		float dv = nearY - (static_cast<float>(v) + 0.5f);
-
+		u = u % (_Width - 1);
+		v = v % ( _Height - 1);
 		vec3 color00, color10, color11, color01;
 		color00.SetFromColor(Get(u, v));
 		color10.SetFromColor(Get(u + 1, v));
@@ -117,6 +140,22 @@ public:
 		+ color01 * (1.0f - du) * dv;
 
 		return ret.GetColor();
+	}
+	unsigned Trilinear(float x, float y, float z)
+	{
+		return 0.0f;
+	}
+	
+	bool IsTransparent(float x, float y)
+	{
+		int nearX = static_cast<int>(x * _Width);
+		int nearY = static_cast<int>(y * _Height);
+		while (nearX > _Width - 1) nearX -= _Width;
+		while (nearX < 0) nearX += _Width;
+		while (nearY > _Height - 1) nearY -= _Height;
+		while (nearY < 0) nearY += _Height;
+
+		return _Transparency[(_Height - nearY - 1) * _Width + nearX];
 	}
 };
 

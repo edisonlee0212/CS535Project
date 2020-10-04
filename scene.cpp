@@ -10,7 +10,9 @@
 Scene* scene;
 
 ThreadPool Scene::_ThreadPool;
-
+vector<DirectionalLight> Scene::_DirectionalLights;
+vector<PointLight> Scene::_PointLights;
+const float Scene::_AmbientLight = 0.1f;
 using namespace std;
 
 #include <iostream>
@@ -41,6 +43,10 @@ Scene::Scene()
 	_Camera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
 	_Camera->SetPose(vec3(0.0f, 0.0f, 200.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	_DirectionalLights.emplace_back();
+	_DirectionalLights[0].diffuse = 0.2f;
+	_DirectionalLights[0].specular = 0.7f;
+	_DirectionalLights[0].direction = vec3(0, 0, -1);
 	
 #ifdef A2
 	auto DNA = new Mesh();
@@ -87,6 +93,20 @@ Scene::Scene()
 	_Meshes.push_back(happy2);
 #endif
 #ifdef A3
+
+	auto windowmat = std::make_shared<Material>();
+	windowmat->SetShininess(4.0f);
+	windowmat->LoadTextureFromTiff("border.tif");
+	windowmat->GetTexture()->SetTransparencyRange(25, 75, 25, 75, true);
+	
+	auto orangemat = std::make_shared<Material>();
+	orangemat->SetShininess(4.0f);
+	orangemat->LoadTextureFromTiff("orange.tif");
+	
+	auto bordermat = std::make_shared<Material>();
+	bordermat->SetShininess(4.0f);
+	bordermat->LoadTextureFromTiff("border.tif");
+	
 	auto uvmat = std::make_shared<Material>();
 	uvmat->LoadTextureFromTiff("uv-test.tif");
 	
@@ -101,38 +121,56 @@ Scene::Scene()
 
 	auto gimat = std::make_shared<Material>();
 	gimat->LoadTextureFromTiff("GI.tif");
-	
-	auto quad1 = new Model(viewmat);
-	quad1->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
-	quad1->SetCenter(vec3(60.0f, 0.0f, 0.0f));
-	quad1->SetScale(vec3(10.0, 10.0, 10.0));
 
+	auto teapot1k = new Model(orangemat, true, true);
+	teapot1k->GetMesh().LoadBin("geometry/teapot1K.bin");
+	teapot1k->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	teapot1k->SetScale(vec3(1.0, 1.0, 1.0));
+	
+	auto cube = new Model(windowmat, true, true);
+	cube->GetMesh().SetToCube(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	cube->SetCenter(vec3(60.0f, 0.0f, 0.0f));
+	cube->SetScale(vec3(9.0, 9.0, 9.0));
+	
 	auto quad2 = new Model(catmat);
 	quad2->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
 	quad2->SetCenter(vec3(0.0f, 60.0f, 0.0f));
-	quad2->SetScale(vec3(10.0, 10.0, 10.0));
+	quad2->SetScale(vec3(9.0, 9.0, 9.0));
 
 	auto quad3 = new Model(treemat);
 	quad3->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
 	quad3->SetCenter(vec3(-60.0f, 0.0f, 0.0f));
-	quad3->SetScale(vec3(10.0, 10.0, 10.0));
+	quad3->SetScale(vec3(9.0, 9.0, 9.0));
 
 	auto quad4 = new Model(uvmat);
 	quad4->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
 	quad4->SetCenter(vec3(0.0f, -60.0f, 0.0f));
-	quad4->SetScale(vec3(10.0, 10.0, 10.0));
+	quad4->SetScale(vec3(9.0, 9.0, 9.0));
 
 	auto quad5 = new Model(gimat);
 	quad5->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
-	quad5->SetCenter(vec3(0.0f, 0.0f, 0.0f));
-	quad5->SetScale(vec3(12.0f, 12.0f, 12.0f));
+	quad5->SetCenter(vec3(60.0f, 60.0f, 0.0f));
+	quad5->SetScale(vec3(9.0f, 9.0f, 9.0f));
 
-	
-	_Models.push_back(quad1);
+
+	auto quad6 = new Model(viewmat);
+	quad6->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad6->SetCenter(vec3(-60.0f, 60.0f, 0.0f));
+	quad6->SetScale(vec3(9.0f, 9.0f, 9.0f));
+
+	auto quad7 = new Model(viewmat);
+	quad7->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor(), 3.0f);
+	quad7->SetCenter(vec3(-60.0f, -60.0f, 0.0f));
+	quad7->SetScale(vec3(9.0f, 9.0f, 9.0f));
+
+	_Models.push_back(teapot1k);
+	_Models.push_back(cube);
 	_Models.push_back(quad2);
 	_Models.push_back(quad3);
 	_Models.push_back(quad4);
 	_Models.push_back(quad5);
+	_Models.push_back(quad6);
+	_Models.push_back(quad7);
 #endif
 
 	
@@ -171,23 +209,33 @@ void Scene::FixedUpdate()
 	_Meshes[5]->Rotate(_Meshes[5]->GetCenter(), vec3(0.0f, 0.0f, 1.0f), 2.0f);
 #endif
 #ifdef A3
-	_Models[0]->GetMesh().Rotate(_Models[0]->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), 2.0f);
+	int i = 0;
+	for(auto* model : _Models)
+	{
+		i++;
+		if (i % 8 == 0) i++;
+		model->GetMesh().Rotate(model->GetMesh().GetCenter(), vec3(i % 8 > 0 ? 1 : 0, i % 4 > 0 ? 1 : 0, i % 2 > 0 ? 1 : 0), 2.0f);
+	}
+	
 #endif	
 }
 
 void Scene::Update()
 {
-	if (currentTime > 5.0f && currentTime < 10.0f) {
 #ifdef A2
+	if (currentTime > 5.0f && currentTime < 10.0f) {
+
 		vec3 target = vec3(0.0f, 0.0f, 0.0f);
 		vec3 center = vec3(200.0f * sin((currentTime - 5.0f) / 5.0f * 3.1415926f), 0.0f, 200.0f * cos((currentTime - 5.0f) / 5.0f * 3.1415926f));
-		_Camera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
+		_Camera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));	
+	}
 #endif
 #ifdef A3
-
+	_DirectionalLights[0].direction = vec3(sin(currentTime * 5), 0, cos(currentTime * 5));
+	vec3 target = vec3(0.0f, 0.0f, 0.0f);
+	vec3 center = vec3(200.0f * sin(currentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(currentTime / 5.0f * 3.1415926f));
+	_Camera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif	
-		
-	}
 }
 
 void Scene::LateUpdate()
@@ -218,7 +266,7 @@ void Scene::DBG()
 		auto stop = std::chrono::high_resolution_clock::now();
 		currentTime = FpSeconds(stop - start).count();
 		Update();
-		if(currentTime - lastTimeStep >= 0.0f)
+		if(currentTime - lastTimeStep >= 0.033f)
 		{
 			lastTimeStep = currentTime;
 			FixedUpdate();
