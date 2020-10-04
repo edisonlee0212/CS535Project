@@ -211,6 +211,37 @@ void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned in
 
 void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1)
 {
+	_VertsN = 4;
+	_TrisN = 2;
+	Allocate(_VertsN, _TrisN);
+
+	HasTexCoords = true;
+	HasColors = true;
+	HasNormals = false;
+	int vi = 0;
+	//1234
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 0);
+	vi++;
+	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(0, 1);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 1);
+	vi++;
+	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
+	_TexCoords[vi] = vec2(1, 0);
+	vi++;
+
+	int tri = 0;
+	_Tris[3 * tri + 0] = 0;
+	_Tris[3 * tri + 1] = 1;
+	_Tris[3 * tri + 2] = 2;
+	tri++;
+	_Tris[3 * tri + 0] = 2;
+	_Tris[3 * tri + 1] = 3;
+	_Tris[3 * tri + 2] = 0;
+	tri++;
 }
 
 void Mesh::DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const

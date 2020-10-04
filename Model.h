@@ -3,29 +3,28 @@
 #include "Material.h"
 class Model
 {
-	Mesh* _Mesh;
-	Material* _Material;
+	Mesh _Mesh;
+	std::shared_ptr<Material> _Material;
 public:
 	bool Enabled;
-	Model(Mesh* mesh, Material* material, bool enabled = true)
+	Model(std::shared_ptr<Material> material, bool enabled = true)
 	{
 		Enabled = enabled;
-		_Mesh = mesh;
 		_Material = material;
 	}
-	void SetCenter(vec3 value) const
+	void SetCenter(vec3 value)
 	{
-		if (_Mesh != nullptr) _Mesh->SetCenter(value);
+		_Mesh.SetCenter(value);
 	}
-	void SetScale(vec3 value) const
+	void SetScale(vec3 value)
 	{
-		if (_Mesh != nullptr) _Mesh->Scale(value);
+		_Mesh.Scale(value);
 	}
-	Mesh* GetMesh() const { return _Mesh; }
-	Material* GetMaterial() const { return _Material; }
-	void Draw(FrameBuffer* fb, Camera* camera, FillMode mode) const
+	Mesh& GetMesh() { return _Mesh; }
+	std::shared_ptr<Material> GetMaterial() const { return _Material; }
+	void Draw(FrameBuffer* fb, Camera* camera, FillMode mode)
 	{
-		_Mesh->DrawFilled(fb, camera, mode, _Material);
+		_Mesh.DrawFilled(fb, camera, mode, _Material.get());
 	}
 };
 

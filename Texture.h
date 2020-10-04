@@ -31,9 +31,9 @@ public:
 		_Height = height;
 		_Pixels.resize(_Width * _Height);
 	}
-	void LoadTiff(char* fileName)
+	void LoadTiff(std::string fileName)
 	{
-		TIFF* in = TIFFOpen(fileName, "r");
+		TIFF* in = TIFFOpen(fileName.c_str(), "r");
 		if (in == nullptr)
 		{
 			cerr << fileName << " could not be opened" << endl;
@@ -55,9 +55,9 @@ public:
 
 		TIFFClose(in);
 	}
-	void SaveAsTiff(char* fileName) const
+	void SaveAsTiff(std::string fileName) const
 	{
-		TIFF* out = TIFFOpen(fileName, "w");
+		TIFF* out = TIFFOpen(fileName.c_str(), "w");
 
 		if (out == nullptr)
 		{

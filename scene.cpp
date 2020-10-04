@@ -87,18 +87,52 @@ Scene::Scene()
 	_Meshes.push_back(happy2);
 #endif
 #ifdef A3
-	auto mesh = new Mesh();
-	//mesh->LoadBin("geometry/teapot1K.bin");
-	mesh->SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
-	auto teapotTex = new Texture();
-	teapotTex->LoadTiff("uv-test.tif");
-	auto teapotMat = new Material();
-	teapotMat->SetTexture(teapotTex);
-	auto teapot = new Model(mesh, teapotMat);
-	teapot->SetCenter(vec3(0.0f, 0.0f, 0.0f));
-	teapot->SetScale(vec3(10.0f, 10.0f, 10.0f));
+	auto uvmat = std::make_shared<Material>();
+	uvmat->LoadTextureFromTiff("uv-test.tif");
+	
+	auto viewmat = std::make_shared<Material>();
+	viewmat->LoadTextureFromTiff("view.tif");
 
-	_Models.push_back(teapot);
+	auto catmat = std::make_shared<Material>();
+	catmat->LoadTextureFromTiff("cat.tif");
+
+	auto treemat = std::make_shared<Material>();
+	treemat->LoadTextureFromTiff("tree.tif");
+
+	auto gimat = std::make_shared<Material>();
+	gimat->LoadTextureFromTiff("GI.tif");
+	
+	auto quad1 = new Model(viewmat);
+	quad1->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad1->SetCenter(vec3(60.0f, 0.0f, 0.0f));
+	quad1->SetScale(vec3(10.0, 10.0, 10.0));
+
+	auto quad2 = new Model(catmat);
+	quad2->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad2->SetCenter(vec3(0.0f, 60.0f, 0.0f));
+	quad2->SetScale(vec3(10.0, 10.0, 10.0));
+
+	auto quad3 = new Model(treemat);
+	quad3->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad3->SetCenter(vec3(-60.0f, 0.0f, 0.0f));
+	quad3->SetScale(vec3(10.0, 10.0, 10.0));
+
+	auto quad4 = new Model(uvmat);
+	quad4->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad4->SetCenter(vec3(0.0f, -60.0f, 0.0f));
+	quad4->SetScale(vec3(10.0, 10.0, 10.0));
+
+	auto quad5 = new Model(gimat);
+	quad5->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad5->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	quad5->SetScale(vec3(12.0f, 12.0f, 12.0f));
+
+	
+	_Models.push_back(quad1);
+	_Models.push_back(quad2);
+	_Models.push_back(quad3);
+	_Models.push_back(quad4);
+	_Models.push_back(quad5);
 #endif
 
 	
@@ -137,7 +171,7 @@ void Scene::FixedUpdate()
 	_Meshes[5]->Rotate(_Meshes[5]->GetCenter(), vec3(0.0f, 0.0f, 1.0f), 2.0f);
 #endif
 #ifdef A3
-	_Models[0]->GetMesh()->Rotate(_Models[0]->GetMesh()->GetCenter(), vec3(1.0f, 0.0f, 0.0f), 2.0f);
+	_Models[0]->GetMesh().Rotate(_Models[0]->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), 2.0f);
 #endif	
 }
 
