@@ -13,25 +13,27 @@
 class Scene
 {
 	friend class Mesh;
-	const static float _AmbientLight;
+	static float _AmbientLight;
 	static vector<DirectionalLight> _DirectionalLights;
 	static vector<PointLight> _PointLights;
 	
 	static ThreadPool _ThreadPool;
-	vector<Mesh*> _Meshes;
-	vector<Model*> _Models;
-	Camera* _Camera;
-	FrameBuffer* _FrameBuffer;
-	GUI* gui;
-	float lastTimeStep = 0;
-	float currentTime = 0;
+	static vector<Mesh*> _Meshes;
+	static vector<Model*> _Models;
+	static Camera* _MainCamera;
+	static FrameBuffer* _FrameBuffer;
+	static GUI* _GUI;
+	static float _LastTimeStep;
+	static float _CurrentTime;
 public:
 	static ThreadPool* GetThreadPool();
 	Scene();
-	void DBG();
+	static void DBG();
 	static void NewButton();
 	void Render() const;
 
+	void MainLoop();
+	
 	void FixedUpdate();
 	void Update();
 	void LateUpdate();

@@ -35,10 +35,6 @@ public:
 		if (ZBuffer[uv] > z)
 			return;
 		ZBuffer[uv] = z;
-
-		if (u < 0 || u > Width - 1 || v < 0 || v > Height - 1)
-			return;
-
 		Pixels[(Height - 1 - v) * Width + u] = color;
 	}
 	void LoadTiff(char* fileName);

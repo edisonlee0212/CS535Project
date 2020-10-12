@@ -19,6 +19,7 @@ public:
 
 	unsigned Get(int u, int v)
 	{
+		if (u < 0 || v < 0 || u >= _Width || v >= _Height) return 0;
 		return _Pixels[(_Height - v - 1) * _Width + u];
 	}
 

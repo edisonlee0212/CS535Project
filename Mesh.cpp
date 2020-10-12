@@ -249,15 +249,19 @@ void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1
 	//1234
 	_Verts[vi] = cc + vec3(-sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
 	_TexCoords[vi] = vec2(0, 0);
+	_Colors[vi].SetFromColor(color0);
 	vi++;
 	_Verts[vi] = cc + vec3(-sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
 	_TexCoords[vi] = vec2(0, tiledFactor);
+	_Colors[vi].SetFromColor(color0);
 	vi++;
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, -sideLength / 2.0f, +sideLength / 2.0f);
 	_TexCoords[vi] = vec2(tiledFactor, tiledFactor);
+	_Colors[vi].SetFromColor(color1);
 	vi++;
 	_Verts[vi] = cc + vec3(+sideLength / 2.0f, +sideLength / 2.0f, +sideLength / 2.0f);
 	_TexCoords[vi] = vec2(tiledFactor, 0);
+	_Colors[vi].SetFromColor(color1);
 	vi++;
 
 	int tri = 0;
@@ -349,15 +353,6 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* camera, FillMode mode, Material* 
 	group = _TrisN / tSize;
 	results.reserve(tSize);
 	std::mutex writeMutex;
-	/*for(auto i = 0; i < _TrisN; i++)
-	{
-		results.push_back(Scene::GetThreadPool()->Push([i, this, &proj, &fb, &writeMutex, mode, &camera, &material](int id)
-		{
-			RasterizationHelper(i, fb, proj, camera, mode, writeMutex, material);
-		}).share());
-	}
-	*/
-
 	for (auto t = 0; t < tSize; t++)
 	{
 		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &fb, &writeMutex, mode, &camera, &material, receiveLight](int id)
@@ -382,6 +377,84 @@ void Mesh::DrawFilled(FrameBuffer* fb, Camera* camera, FillMode mode, Material* 
 		result.wait();
 	}
 #pragma endregion
+}
+
+void Mesh::PointLightShadowHelper(CubeShadowMap& shadowMap, Camera& camera, int index)
+{
+	vector<vec3> proj;
+	proj.resize(_VertsN);
+	std::vector<shared_future<void>> results;
+	auto tSize = Scene::GetThreadPool()->Size();
+	size_t group = _VertsN / tSize;
+	results.reserve(tSize);
+#pragma region Points projection
+	for (auto t = 0; t < tSize; t++)
+	{
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &camera, &proj](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					camera.Project(_Verts[i], proj[i]);
+				}
+			}).share());
+	}
+	for (auto i = tSize * group; i < _VertsN; i++)
+	{
+		camera.Project(_Verts[i], proj[i]);
+	}
+	for (auto& result : results)
+	{
+		result.wait();
+	}
+#pragma region SetColor
+	results.clear();
+	tSize = Scene::GetThreadPool()->Size();
+	group = _TrisN / tSize;
+	results.reserve(tSize);
+	std::mutex writeMutex;
+	for (auto t = 0; t < tSize; t++)
+	{
+		results.push_back(Scene::GetThreadPool()->Push([t, group, this, &proj, &writeMutex, &camera, index, &shadowMap](int id)
+			{
+				for (auto i = t * group; i < (t + 1) * group; i++)
+				{
+					ShadowMapRasterizationHelper(i, shadowMap, proj, camera, writeMutex, index);
+				}
+			}).share());
+	}
+
+	results.push_back(Scene::GetThreadPool()->Push([tSize, group, this, &proj, &writeMutex, &camera, index, &shadowMap](int id) {
+		for (auto i = tSize * group; i < _TrisN; i++)
+		{
+			ShadowMapRasterizationHelper(i, shadowMap, proj, camera, writeMutex, index);
+		}
+		}).share());
+
+
+	for (auto& result : results)
+	{
+		result.wait();
+	}
+#pragma endregion
+}
+
+
+
+void Mesh::CastPointLightShadow(PointLight& pl)
+{
+	Camera camera(90, pl.ShadowMap.GetResolution(), pl.ShadowMap.GetResolution());
+	camera.SetPose(pl.position, pl.position + vec3(1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0));
+	PointLightShadowHelper(pl.ShadowMap, camera, 0);
+	camera.SetPose(pl.position, pl.position + vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0));
+	PointLightShadowHelper(pl.ShadowMap, camera, 1);
+	camera.SetPose(pl.position, pl.position + vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0));
+	PointLightShadowHelper(pl.ShadowMap, camera, 2);
+	camera.SetPose(pl.position, pl.position + vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0));
+	PointLightShadowHelper(pl.ShadowMap, camera, 3);
+	camera.SetPose(pl.position, pl.position + vec3(0.0, 0.0, 1.0), vec3(0.0, -1.0, 0.0));
+	PointLightShadowHelper(pl.ShadowMap, camera, 4);
+	camera.SetPose(pl.position, pl.position + vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0));
+	PointLightShadowHelper(pl.ShadowMap, camera, 5);
 }
 
 void Mesh::LoadBin(char* filename)
@@ -556,6 +629,8 @@ void Mesh::Scale(vec3 value)
 	SetCenter(center);
 }
 
+
+
 inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* camera, FillMode mode, std::mutex& writeMutex, Material* material, bool calculateLighting) const
 {
 	vec3 projectedVertices[3], vertices[3], colors[3], normals[3], texCoords[3];
@@ -658,7 +733,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 	}
 
 	z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
-
+	if(isnan(z[0]) || isnan(z[1]) || isnan(z[2])) return;
 	vec3 viewPos = camera->Center;
 
 	switch (mode)
@@ -723,6 +798,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 			}
 		}
 		break;
+	case _FillMode_Vertex_Color_Lighting:
 	case _FillMode_Texture_Nearest:
 	case _FillMode_Texture_Bilinear:
 	case _FillMode_Texture_Trilinear:
@@ -736,16 +812,8 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 					continue;
 				vec3 texCoord = (texCoordABC * pixel) / (densityABC * pixel);
 				vec3 normal = (normalsABC * pixel) / (densityABC * pixel);
-
-				/*vec3 normal(pixel * (ssim * vec3(normals[0][0], normals[1][0], normals[2][0])),
-					pixel * (ssim * vec3(normals[0][1], normals[1][1], normals[2][1])),
-					pixel * (ssim * vec3(normals[0][2], normals[1][2], normals[2][2])));
-
-				vec3 texCoord(pixel * (ssim * vec3(texCoords[0][0], texCoords[1][0], texCoords[2][0])),
-					pixel * (ssim * vec3(texCoords[0][1], texCoords[1][1], texCoords[2][1])),
-					pixel * (ssim * vec3(texCoords[0][2], texCoords[1][2], texCoords[2][2])));
-				*/
 				pixel[2] = pixel * z;
+				
 				std::lock_guard<std::mutex> lock(writeMutex);
 				if (material != nullptr && material->GetTexture() != nullptr) {
 					if (material->GetTexture()->IsTransparent(texCoord[0], texCoord[1])) continue;
@@ -761,6 +829,9 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 						break;
 					case _FillMode_Texture_Trilinear:
 						surfaceColor = material->GetTexture()->Trilinear(texCoord[0], texCoord[1], pixel[2]);
+						break;
+					case _FillMode_Vertex_Color_Lighting:
+						surfaceColor = ((colorsABC * pixel) / (densityABC * pixel)).GetColor();
 						break;
 					}
 
@@ -793,4 +864,93 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 		}
 		break;
 	}
+}
+
+void Mesh::ShadowMapRasterizationHelper(int i, CubeShadowMap& shadowMap, vector<vec3>& proj, Camera& camera, std::mutex& writeMutex,
+	int cubeMapIndex)
+{
+	vec3 projectedVertices[3], vertices[3];
+	projectedVertices[0] = proj[_Tris[3 * i + 0]];
+	projectedVertices[1] = proj[_Tris[3 * i + 1]];
+	projectedVertices[2] = proj[_Tris[3 * i + 2]];
+	vertices[0] = _Verts[_Tris[3 * i + 0]];
+	vertices[1] = _Verts[_Tris[3 * i + 1]];
+	vertices[2] = _Verts[_Tris[3 * i + 2]];
+
+	if (projectedVertices[0][0] == FLT_MAX || projectedVertices[1][0] == FLT_MAX || projectedVertices[2][0] == FLT_MAX) return;
+	Bounds bound;
+	bound.MaxBound = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	bound.MinBound = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+	for (auto& pv : projectedVertices)
+	{
+		if (bound.MaxBound[0] < pv[0]) bound.MaxBound[0] = pv[0];
+		if (bound.MaxBound[1] < pv[1]) bound.MaxBound[1] = pv[1];
+		if (bound.MaxBound[2] < pv[2]) bound.MaxBound[2] = pv[2];
+		if (bound.MinBound[0] > pv[0]) bound.MinBound[0] = pv[0];
+		if (bound.MinBound[1] > pv[1]) bound.MinBound[1] = pv[1];
+		if (bound.MinBound[2] > pv[2]) bound.MinBound[2] = pv[2];
+	}
+	vec3 minClip(0.0f, 0.0f, 0.0f);
+	vec3 maxClip(static_cast<float>(shadowMap.GetResolution()), static_cast<float>(shadowMap.GetResolution()), 0.0f);
+	vec3 eeqs[3];
+	for (auto vi = 0; vi < 3; vi++)
+	{
+		eeqs[vi][0] = projectedVertices[(vi + 1) % 3][1] - projectedVertices[vi][1];
+		eeqs[vi][1] = projectedVertices[vi][0] - projectedVertices[(vi + 1) % 3][0];
+		eeqs[vi][2] = -projectedVertices[vi][0] * eeqs[vi][0] + projectedVertices[vi][1] * -eeqs[vi][1];
+		vec3 v2p(projectedVertices[(vi + 2) % 3][0], projectedVertices[(vi + 2) % 3][1], 1.0f);
+		if (v2p * eeqs[vi] < 0.0f)
+			eeqs[vi] = eeqs[vi] * -1.0f;
+	}
+	if (!bound.Clip(minClip, maxClip, 2))
+		return;
+	const auto left = static_cast<int>(bound.MinBound[0] + 0.5f);
+	const auto right = static_cast<int>(bound.MaxBound[0] - 0.5f);
+	const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
+	const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
+
+
+	mat3 screenSpaceInterpolationMat;
+	screenSpaceInterpolationMat.SetColumn(0, vec3(projectedVertices[0][0], projectedVertices[1][0], projectedVertices[2][0]));
+	screenSpaceInterpolationMat.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
+	screenSpaceInterpolationMat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
+	screenSpaceInterpolationMat = screenSpaceInterpolationMat.Inverted();
+
+
+
+	mat3 vs;
+	vs[0] = vertices[0];
+	vs[1] = vertices[1];
+	vs[2] = vertices[2];
+
+
+	mat3 modelSpaceInterpolationMat = GetModelSpaceInterpolationMat(vs, &camera);
+	vec3 densityABC = modelSpaceInterpolationMat[0] + modelSpaceInterpolationMat[1] + modelSpaceInterpolationMat[2];
+	mat3 vertexPosABC = vs.Transpose() * modelSpaceInterpolationMat;
+
+	vec3 z;
+	vec3 r, g, b;
+
+
+	z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
+
+	vec3 viewPos = camera.Center;
+
+
+	for (auto v = top; v <= bottom; v++)
+	{
+		for (auto u = left; u <= right; u++)
+		{
+			vec3 pixel(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+			if (pixel * eeqs[0] < 0.0f || pixel * eeqs[1] < 0.0f
+				|| pixel * eeqs[2] < 0.0f)
+				continue;
+			
+			pixel[2] = pixel * z;
+			std::lock_guard<std::mutex> lock(writeMutex);
+			shadowMap.SetZ(pixel[0], pixel[1], pixel[2], cubeMapIndex);
+			
+		}
+	}
+
 }

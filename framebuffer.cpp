@@ -26,8 +26,7 @@ void FrameBuffer::Resize(int width, int height)
 
 void FrameBuffer::ClearZBuffer()
 {
-	for (int uv = 0; uv < Width * Height; uv++)
-		ZBuffer[uv] = 0.0f;
+	memset(&ZBuffer[0], 0, ZBuffer.size() * sizeof(float));
 }
 
 void FrameBuffer::draw()
@@ -67,8 +66,7 @@ void FrameBuffer::KeyboardHandle()
 
 void FrameBuffer::SetBGR(unsigned int bgr)
 {
-	for (int uv = 0; uv < Width * Height; uv++)
-		Pixels[uv] = bgr;
+	memset(&Pixels[0], -1, Pixels.size() * sizeof(unsigned));
 }
 
 // load a tiff image to pixel buffer

@@ -2,17 +2,27 @@
 
 #include "scene.h"
 
+#include <string>
+
+
 #include "vec3.h"
 #include "mat3.h"
 #include "Camera.h"
 #include "Mesh.h"
 
 Scene* scene;
-
-ThreadPool Scene::_ThreadPool;
+float Scene::_AmbientLight = 0.05f;
 vector<DirectionalLight> Scene::_DirectionalLights;
 vector<PointLight> Scene::_PointLights;
-const float Scene::_AmbientLight = 0.1f;
+
+ThreadPool Scene::_ThreadPool;
+vector<Mesh*> Scene::_Meshes;
+vector<Model*> Scene::_Models;
+Camera* Scene::_MainCamera;
+FrameBuffer* Scene::_FrameBuffer;
+GUI* Scene::_GUI;
+float Scene::_LastTimeStep = 0;
+float Scene::_CurrentTime = 0;
 using namespace std;
 
 #include <iostream>
@@ -21,32 +31,38 @@ ThreadPool* Scene::GetThreadPool()
 {
 	return &_ThreadPool;
 }
-#define A3
+#define A4
 Scene::Scene()
 {
-	gui = new GUI();
-	gui->show();
+	_GUI = new GUI();
+	_GUI->show();
 	_ThreadPool.Resize(std::thread::hardware_concurrency());
 
 	int u0 = 20;
 	int v0 = 20;
-	int h = 720;
-	int w = 1280;
+	int h = 600;
+	int w = 800;
 
 	_FrameBuffer = new FrameBuffer(u0, v0, w, h, 0);
 	_FrameBuffer->label("SW frame buffer");
 	_FrameBuffer->show();
 	_FrameBuffer->redraw();
 
-	gui->uiw->position(u0, v0 + h + 50);
+	_GUI->uiw->position(u0, v0 + h + 50);
 	float hfov = 75.0f;
-	_Camera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
+	_MainCamera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
-	_Camera->SetPose(vec3(0.0f, 0.0f, 200.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	_DirectionalLights.emplace_back();
 	_DirectionalLights[0].diffuse = 0.2f;
 	_DirectionalLights[0].specular = 0.7f;
 	_DirectionalLights[0].direction = vec3(0, 0, -1);
+
+	_PointLights.emplace_back();
+	_PointLights[0].position = vec3(0, 50, 0);
+	_PointLights[0].ambient = 1.0f;
+	_PointLights[0].diffuse = 0.0f;
+	_PointLights[0].specular = 0.0f;
 	
 #ifdef A2
 	auto DNA = new Mesh();
@@ -173,8 +189,48 @@ Scene::Scene()
 	_Models.push_back(quad7);
 #endif
 
+#ifdef A4
+	auto bordermat = std::make_shared<Material>();
+	bordermat->SetShininess(4.0f);
+	bordermat->LoadTextureFromTiff("border.tif");
 	
-	Render();
+	auto orangemat = std::make_shared<Material>();
+	orangemat->SetShininess(4.0f);
+	orangemat->LoadTextureFromTiff("orange.tif");
+	auto cube1 = new Model(orangemat, true, true);
+	cube1->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	cube1->SetCenter(vec3(15.0f, 10.0f, 15.0f));
+	cube1->SetScale(vec3(1.0, 1.0, 1.0));
+	auto cube2 = new Model(orangemat, true, true);
+	cube2->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	cube2->SetCenter(vec3(15.0f, 10.0f, -15.0f));
+	cube2->SetScale(vec3(1.0, 1.0, 1.0));
+	auto cube3 = new Model(orangemat, true, true);
+	cube3->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	cube3->SetCenter(vec3(-15.0f, 10.0f, 15.0f));
+	cube3->SetScale(vec3(1.0, 1.0, 1.0));
+	
+	auto cube4 = new Model(orangemat, true, true);
+	cube4->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	cube4->SetCenter(vec3(-15.0f, 10.0f, -15.0f));
+	cube4->SetScale(vec3(1.0, 1.0, 1.0));
+	
+	auto quad = new Model(bordermat);
+	quad->GetMesh().SetToQuad(vec3(0, 0, 0), 100, vec3(128, 32, 32).GetColor(), vec3(128, 32, 32).GetColor());
+	
+	quad->SetScale(vec3(1.0, 1.0, 1.0));
+	quad->GetMesh().Rotate(quad->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), 90.0f);
+	quad->SetCenter(vec3(0.0f, 5.0f, 0.0f));
+	quad->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+	
+	_Models.push_back(cube1);
+	_Models.push_back(cube2);
+	_Models.push_back(cube3);
+	_Models.push_back(cube4);
+	_Models.push_back(quad);
+#endif
+
+	MainLoop();	
 }
 
 void Scene::Render() const
@@ -186,7 +242,7 @@ void Scene::Render() const
 	{
 		if (!mesh->Enabled)
 			continue;
-		mesh->DrawFilled(_FrameBuffer, _Camera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
+		mesh->DrawFilled(_FrameBuffer, _MainCamera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
 	}
 #endif
 #ifdef A3
@@ -194,10 +250,59 @@ void Scene::Render() const
 	{
 		if (!model->Enabled)
 			continue;
-		model->Draw(_FrameBuffer, _Camera, _FillMode_Texture_Bilinear);
+		model->Draw(_FrameBuffer, _MainCamera, _FillMode_Texture_Bilinear);
 	}
 #endif
+#ifdef A4
+	for (auto& pl : _PointLights)
+	{
+		pl.ShadowMap.Clear();
+		for (const auto& model : _Models)
+		{
+			if (!model->Enabled)
+				continue;
+			model->GetMesh().CastPointLightShadow(pl);
+		}
+	}
+	
+	for (const auto& model : _Models)
+	{
+		if (!model->Enabled)
+			continue;
+		model->Draw(_FrameBuffer, _MainCamera);
+	}
+#endif
+
 	_FrameBuffer->redraw();
+}
+
+void Scene::MainLoop()
+{
+	float delta = 0.1f;
+	auto start = std::chrono::high_resolution_clock::now();
+	// A floating point milliseconds type
+	using FpSeconds =
+		std::chrono::duration<float, std::chrono::seconds::period>;
+
+	static_assert(std::chrono::treat_as_floating_point<FpSeconds::rep>::value,
+		"Rep required to be floating point");
+	
+	while (true)
+	{
+		Fl::check();
+		auto stop = std::chrono::high_resolution_clock::now();
+		float lastFrameTime = _CurrentTime;
+		_CurrentTime = FpSeconds(stop - start).count();
+		cout << std::to_string(_CurrentTime - lastFrameTime) << endl;
+		Update();
+		if (_CurrentTime - _LastTimeStep >= 0.033f)
+		{
+			_LastTimeStep = _CurrentTime;
+			FixedUpdate();
+		}
+		LateUpdate();
+		Render();
+	}
 }
 
 void Scene::FixedUpdate()
@@ -215,26 +320,28 @@ void Scene::FixedUpdate()
 		i++;
 		if (i % 8 == 0) i++;
 		model->GetMesh().Rotate(model->GetMesh().GetCenter(), vec3(i % 8 > 0 ? 1 : 0, i % 4 > 0 ? 1 : 0, i % 2 > 0 ? 1 : 0), 2.0f);
-	}
+	}	
+#endif
+#ifdef A4
 	
-#endif	
+#endif
 }
 
 void Scene::Update()
 {
 #ifdef A2
-	if (currentTime > 5.0f && currentTime < 10.0f) {
+	if (_CurrentTime > 5.0f && _CurrentTime < 10.0f) {
 
 		vec3 target = vec3(0.0f, 0.0f, 0.0f);
-		vec3 center = vec3(200.0f * sin((currentTime - 5.0f) / 5.0f * 3.1415926f), 0.0f, 200.0f * cos((currentTime - 5.0f) / 5.0f * 3.1415926f));
-		_Camera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));	
+		vec3 center = vec3(200.0f * sin((_CurrentTime - 5.0f) / 5.0f * 3.1415926f), 0.0f, 200.0f * cos((_CurrentTime - 5.0f) / 5.0f * 3.1415926f));
+		_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));	
 	}
 #endif
 #ifdef A3
-	_DirectionalLights[0].direction = vec3(sin(currentTime * 5), 0, cos(currentTime * 5));
+	_DirectionalLights[0].direction = vec3(sin(_CurrentTime * 5), 0, cos(_CurrentTime * 5));
 	vec3 target = vec3(0.0f, 0.0f, 0.0f);
-	vec3 center = vec3(200.0f * sin(currentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(currentTime / 5.0f * 3.1415926f));
-	_Camera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
+	vec3 center = vec3(200.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
+	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif	
 }
 
@@ -251,29 +358,7 @@ void Scene::LateUpdate()
 void Scene::DBG()
 {
 	_FrameBuffer->SaveAsTiff("a.tif");
-	float delta = 0.1f;
-	auto start = std::chrono::high_resolution_clock::now();
-	// A floating point milliseconds type
-	using FpSeconds =
-		std::chrono::duration<float, std::chrono::seconds::period>;
-
-	static_assert(std::chrono::treat_as_floating_point<FpSeconds::rep>::value,
-		"Rep required to be floating point");
-	
-	while(true)
-	{
-		Fl::check();
-		auto stop = std::chrono::high_resolution_clock::now();
-		currentTime = FpSeconds(stop - start).count();
-		Update();
-		if(currentTime - lastTimeStep >= 0.033f)
-		{
-			lastTimeStep = currentTime;
-			FixedUpdate();
-		}
-		LateUpdate();
-		Render();
-	}
+	_PointLights[0].ShadowMap.SaveAsTiff("cm");
 }
 void Scene::NewButton()
 {

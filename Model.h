@@ -3,6 +3,7 @@
 #include "Material.h"
 class Model
 {
+	FillMode _DefaultFillMode;
 	Mesh _Mesh;
 	bool _ReceiveLight;
 	std::shared_ptr<Material> _Material;
@@ -13,6 +14,7 @@ public:
 		Enabled = enabled;
 		_Material = material;
 		_ReceiveLight = receiveLight;
+		_DefaultFillMode = _FillMode_Texture_Bilinear;
 	}
 	void SetCenter(vec3 value)
 	{
@@ -22,11 +24,22 @@ public:
 	{
 		_Mesh.Scale(value);
 	}
+
+	void SetDefaultFillMode(FillMode mode)
+	{
+		_DefaultFillMode = mode;
+	}
+	
 	Mesh& GetMesh() { return _Mesh; }
 	std::shared_ptr<Material> GetMaterial() const { return _Material; }
 	void Draw(FrameBuffer* fb, Camera* camera, FillMode mode)
 	{
 		_Mesh.DrawFilled(fb, camera, mode, _Material.get(), _ReceiveLight);
+	}
+
+	void Draw(FrameBuffer* fb, Camera* camera)
+	{
+		_Mesh.DrawFilled(fb, camera, _DefaultFillMode, _Material.get(), _ReceiveLight);
 	}
 };
 
