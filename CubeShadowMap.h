@@ -45,12 +45,9 @@ public:
 			return;
 		_Data[index][uv] = z;
 	}
-	bool CompareZ(int u, int v, float z, int index)
+	float GetZ(vec3 dir)
 	{
-		if (u < 0 || u > _Resolution - 1 || v < 0 || v > _Resolution - 1)
-			return false;
-		const int uv = (_Resolution - 1 - v) * _Resolution + u;
-		return z > _Data[index][uv];
+		return 0.0f;
 	}
 	void SaveAsTiff(std::string fileName) const
 	{

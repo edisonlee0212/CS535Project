@@ -847,10 +847,32 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 						{
 							vec3 lightDir = (vec3(0, 0, 0) - dl.direction).Normalized();
 							vec3 diffuse = dl.diffuse * max(normal * lightDir, 0.0f);
-							vec3 reflectDir = (vec3(0, 0, 0) - lightDir).Reflect(normal);
-							vec3 specular = dl.specular * pow(max((viewDir * reflectDir), 0.0f), material->_Shininess);
+							//vec3 reflectDir = (vec3(0, 0, 0) - lightDir).Reflect(normal);
+							vec3 halfwayDir = (lightDir + viewDir).Normalized();
+							vec3 specular = dl.specular * pow(max((normal * halfwayDir), 0.0f), material->_Shininess);
 							result = result + diffuse + specular;
 						}
+
+						for (auto& pl : Scene::_PointLights)
+						{
+							vec3 fragToLight = fragPos - pl.position;
+							float closestDepth = pl.ShadowMap.GetZ(fragToLight);
+							float currentDepth = fragToLight.Length();
+							float bias = 0.05f;
+							float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+							float distance = (pl.position - fragPos).Length();
+							vec3 lightDir = (pl.position - fragPos).Normalized();
+							vec3 diffuse = pl.diffuse * max(normal * lightDir, 0.0f);
+							vec3 halfwayDir = (lightDir + viewDir).Normalized();
+							vec3 specular = pl.specular * pow(max((normal * halfwayDir), 0.0f), material->_Shininess);
+							float attenuation = 1.0f / (pl.constant + pl.linear * distance + pl.quadratic * (distance * distance));
+							result = result + ((diffuse + specular) * attenuation);
+							
+						}
+						if (result[0] > 1.0) result[0] = 1.0;
+						if (result[1] > 1.0) result[1] = 1.0;
+						if (result[2] > 1.0) result[2] = 1.0;
 						surfaceColor = surfaceColV3.Multiply(result).GetColor();
 
 					}

@@ -53,16 +53,19 @@ Scene::Scene()
 	_MainCamera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
 	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	/*
 	_DirectionalLights.emplace_back();
 	_DirectionalLights[0].diffuse = 0.2f;
 	_DirectionalLights[0].specular = 0.7f;
 	_DirectionalLights[0].direction = vec3(0, 0, -1);
-
+	*/
 	_PointLights.emplace_back();
-	_PointLights[0].position = vec3(0, 50, 0);
-	_PointLights[0].ambient = 1.0f;
-	_PointLights[0].diffuse = 0.0f;
-	_PointLights[0].specular = 0.0f;
+	_PointLights[0].position = vec3(0, 20, 0);
+	_PointLights[0].diffuse = vec3(1.0);
+	_PointLights[0].specular = vec3(0.5);
+	_PointLights[0].constant = 1.0f;
+	_PointLights[0].linear = 0.000f;
+	_PointLights[0].quadratic = 0.0075f;
 	
 #ifdef A2
 	auto DNA = new Mesh();
@@ -215,12 +218,12 @@ Scene::Scene()
 	cube4->SetCenter(vec3(-15.0f, 10.0f, -15.0f));
 	cube4->SetScale(vec3(1.0, 1.0, 1.0));
 	
-	auto quad = new Model(bordermat);
-	quad->GetMesh().SetToQuad(vec3(0, 0, 0), 100, vec3(128, 32, 32).GetColor(), vec3(128, 32, 32).GetColor());
+	auto quad = new Model(bordermat, true, true);
+	quad->GetMesh().SetToQuad(vec3(0, 0, 0), 100, vec3(32, 32, 32).GetColor(), vec3(32, 32, 32).GetColor());
 	
 	quad->SetScale(vec3(1.0, 1.0, 1.0));
-	quad->GetMesh().Rotate(quad->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), 90.0f);
-	quad->SetCenter(vec3(0.0f, 5.0f, 0.0f));
+	quad->GetMesh().Rotate(quad->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), -90.0f);
+	quad->SetCenter(vec3(0.0f, 0.0f, 0.0f));
 	quad->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
 	
 	_Models.push_back(cube1);
