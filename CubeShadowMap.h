@@ -15,7 +15,7 @@ class CubeShadowMap
 	std::vector<std::vector<float>> _Data;
 public:
 	unsigned GetResolution() { return _Resolution; }
-	CubeShadowMap(unsigned resolution = 512) : _Resolution(resolution)
+	CubeShadowMap(unsigned resolution = 256) : _Resolution(resolution)
 	{
 		_Data.resize(6);
 		Reallocate(resolution);

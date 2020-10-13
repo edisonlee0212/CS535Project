@@ -32,8 +32,8 @@ class Mesh
 	vector<unsigned> _Tris;
 	int _TrisN;
 
-	inline void PointLightShadowHelper(CubeShadowMap& shadowMap, Camera& camera, int index);
-	inline void ShadowMapRasterizationHelper(int i, CubeShadowMap& shadowMap, vector<vec3>& proj, Camera& camera, std::mutex& writeMutex, int cubeMapIndex);
+	inline void PointLightShadowHelper(PointLight& pl, Camera& camera, int index);
+	inline void ShadowMapRasterizationHelper(int i, PointLight& pl, vector<vec3>& proj, Camera& camera, std::mutex& writeMutex, int cubeMapIndex);
 	inline void RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* camera, FillMode mode, std::mutex& writeMutex, Material* material, bool calculateLighting) const;
 public:
 	bool Enabled;

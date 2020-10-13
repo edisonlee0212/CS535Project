@@ -40,8 +40,8 @@ Scene::Scene()
 
 	int u0 = 20;
 	int v0 = 20;
-	int h = 1280;
-	int w = 720;
+	int h = 600;
+	int w = 800;
 
 	_FrameBuffer = new FrameBuffer(u0, v0, w, h, 0);
 	_FrameBuffer->label("SW frame buffer");
