@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <mutex>
 #include <ostream>
 #include <string>
 #include <tiffio.h>
@@ -12,12 +13,12 @@
 class CubeShadowMap
 {
 	unsigned _Resolution;
-	std::vector<std::vector<float>> _Data;
+	std::vector<float> _Data[6];
+	std::vector<std::mutex> _Locks[6];
 public:
 	unsigned GetResolution() { return _Resolution; }
-	CubeShadowMap(unsigned resolution = 256) : _Resolution(resolution)
+	CubeShadowMap(unsigned resolution = 128) : _Resolution(resolution)
 	{
-		_Data.resize(6);
 		Reallocate(resolution);
 	}
 	void Clear()
@@ -35,7 +36,11 @@ public:
 		for(int i = 0; i < 6; i++)
 		{
 			_Data[i].resize(resolution * resolution);
+			size_t count = resolution * resolution;
+			std::vector<std::mutex> list(count);
+			_Locks[i].swap(list);
 		}
+		
 	}
 	void SetZ(int u, int v, float z, int index)
 	{
@@ -43,6 +48,7 @@ public:
 			return;
 
 		int uv = (_Resolution - 1 - v) * _Resolution + u;
+		std::lock_guard<mutex> lock(_Locks[index][uv]);
 		if (_Data[index][uv] > z)
 			return;
 		_Data[index][uv] = z;
@@ -105,8 +111,10 @@ public:
 		camera.Project(dir, proj);
 		int u = proj[0] + 0.5f;
 		int v = proj[1] + 0.5f;
-		if (u < 0 || v < 0 || u > _Resolution - 1 || v > _Resolution - 1)
-			return 999999.0;
+		if (u < 0) u = 0;
+		if (v < 0) v = 0;
+		if (u > _Resolution - 1) u = _Resolution - 1;
+		if (v > _Resolution - 1) v = _Resolution - 1;
 		int uv = (_Resolution - 1 - v) * _Resolution + u;
 		
 		return _Data[index][uv];
@@ -118,7 +126,7 @@ public:
 			output.resize(_Resolution * _Resolution);
 			for(int i = 0; i < _Resolution * _Resolution; i++)
 			{
-				output[i] = vec3(256.0 / _Data[index][i]).GetColor();
+				output[i] = vec3(_Data[index][i] * 20).GetColor();
 			}
 			TIFF* out = TIFFOpen((fileName + std::to_string(index) + ".tif").c_str(), "w");
 

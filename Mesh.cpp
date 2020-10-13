@@ -812,13 +812,11 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 					continue;
 				vec3 texCoord = (texCoordABC * pixel) / (densityABC * pixel);
 				vec3 normal = (normalsABC * pixel) / (densityABC * pixel);
+				if (camera->GetFront().Normalized() * normal.Normalized() > 0.3) continue;
 				vec3 fragPos = (vertexPosABC * pixel) / (densityABC * pixel);
 				pixel[2] = pixel * z;
-				
-				std::lock_guard<std::mutex> lock(writeMutex);
 				if (material != nullptr && material->GetTexture() != nullptr) {
 					if (material->GetTexture()->IsTransparent(texCoord[0], texCoord[1])) continue;
-					if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
 					unsigned surfaceColor = 0;
 					switch (mode)
 					{
@@ -847,7 +845,6 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 						{
 							vec3 lightDir = (vec3(0, 0, 0) - dl.direction).Normalized();
 							vec3 diffuse = dl.diffuse * max(normal * lightDir, 0.0f);
-							//vec3 reflectDir = (vec3(0, 0, 0) - lightDir).Reflect(normal);
 							vec3 halfwayDir = (lightDir + viewDir).Normalized();
 							vec3 specular = dl.specular * pow(max((normal * halfwayDir), 0.0f), material->_Shininess);
 							result = result + diffuse + specular;
@@ -875,10 +872,11 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 						if (finalColor[2] > 1.0) finalColor[2] = 1.0;
 						surfaceColor = finalColor.GetColor();
 					}
-					fb->Set(pixel[0], pixel[1], surfaceColor);
+					fb->SetZ(pixel[0], pixel[1], pixel[2], surfaceColor);
 				}
 				else
 				{
+					std::lock_guard<std::mutex> lock(writeMutex);
 					if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
 					fb->Set(pixel[0], pixel[1], vec3(0.5, 0, 0.5).GetColor());
 				}
@@ -959,7 +957,6 @@ void Mesh::ShadowMapRasterizationHelper(int i, PointLight& pl, vector<vec3>& pro
 			vec3 fragPos = (vertexPosABC * pixel) / (densityABC * pixel);
 			vec3 fragToLight = fragPos - pl.position;
 			const float currentDepth = 1.0f / fragToLight.Length();
-			std::lock_guard<std::mutex> lock(writeMutex);
 			pl.ShadowMap.SetZ(pixel[0], pixel[1], currentDepth, cubeMapIndex);
 		}
 	}

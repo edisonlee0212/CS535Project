@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <vector>
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
@@ -12,6 +13,7 @@ class FrameBuffer : public Fl_Gl_Window
 public:
 	vector<unsigned> Pixels; // pixel array
 	vector<float> ZBuffer;
+	vector<mutex> ZBufferLocks;
 	int Width, Height;
 	FrameBuffer(int u0, int v0, int width, int height, unsigned int _id);
 	void draw() override;
@@ -32,6 +34,8 @@ public:
 			return;
 
 		int uv = (Height - 1 - v) * Width + u;
+
+		std::lock_guard<mutex> lock(ZBufferLocks[uv]);
 		if (ZBuffer[uv] > z)
 			return;
 		ZBuffer[uv] = z;

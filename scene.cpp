@@ -40,8 +40,8 @@ Scene::Scene()
 
 	int u0 = 20;
 	int v0 = 20;
-	int h = 600;
-	int w = 800;
+	int h = 720;
+	int w = 1280;
 
 	_FrameBuffer = new FrameBuffer(u0, v0, w, h, 0);
 	_FrameBuffer->label("SW frame buffer");
@@ -49,7 +49,7 @@ Scene::Scene()
 	_FrameBuffer->redraw();
 
 	_GUI->uiw->position(u0, v0 + h + 50);
-	float hfov = 90.0f;
+	float hfov = 120.0f;
 	_MainCamera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
 	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
@@ -61,7 +61,7 @@ Scene::Scene()
 	*/
 	_PointLights.emplace_back();
 	_PointLights[0].position = vec3(0, 50, 0);
-	_PointLights[0].diffuse = vec3(2.0);
+	_PointLights[0].diffuse = vec3(1.0);
 	_PointLights[0].specular = vec3(2.0);
 	_PointLights[0].constant = 1.0f;
 	_PointLights[0].linear = 0.001f;
@@ -218,19 +218,60 @@ Scene::Scene()
 	cube4->SetCenter(vec3(-15.0f, 10.0f, -15.0f));
 	cube4->SetScale(vec3(1.0, 1.0, 1.0));
 	
-	auto quad = new Model(bordermat, true, true);
-	quad->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+	auto quad0 = new Model(bordermat, true, true);
+	quad0->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
 	
-	quad->SetScale(vec3(1.0, 1.0, 1.0));
-	quad->GetMesh().Rotate(quad->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), -90.0f);
-	quad->SetCenter(vec3(0.0f, 0.0f, 0.0f));
-	quad->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+	quad0->SetScale(vec3(1.0, 1.0, 1.0));
+	quad0->GetMesh().Rotate(quad0->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), -90.0f);
+	quad0->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	quad0->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+
+	auto quad1 = new Model(bordermat, true, true);
+	quad1->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad1->SetScale(vec3(1.0, 1.0, 1.0));
+	quad1->GetMesh().Rotate(quad1->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 90.0f);
+	quad1->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad1->SetCenter(vec3(-50.0f, 20.0f, 0.0f));
+	quad1->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+	
+	auto quad2 = new Model(bordermat, true, true);
+	quad2->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad2->SetScale(vec3(1.0, 1.0, 1.0));
+	quad2->GetMesh().Rotate(quad2->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), -90.0f);
+	quad2->SetCenter(vec3(50.0f, 20.0f, 0.0f));
+	quad2->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad2->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+	
+	auto quad3 = new Model(bordermat, true, true);
+	quad3->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad3->SetScale(vec3(1.0, 1.0, 1.0));
+	quad3->GetMesh().Rotate(quad3->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 0.0f);
+	quad3->SetCenter(vec3(0.0f, 20.0f, -50.0f));
+	quad3->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad3->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+	
+	auto quad4 = new Model(bordermat, true, true);
+	quad4->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad4->SetScale(vec3(1.0, 1.0, 1.0));
+	quad4->GetMesh().Rotate(quad4->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 180.0f);
+	quad4->SetCenter(vec3(0.0f, 20.0f, 50.0f));
+	quad4->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad4->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
 	
 	_Models.push_back(cube1);
 	_Models.push_back(cube2);
 	_Models.push_back(cube3);
 	_Models.push_back(cube4);
-	_Models.push_back(quad);
+
+	_Models.push_back(quad1);
+	_Models.push_back(quad2);
+	_Models.push_back(quad3);
+	_Models.push_back(quad4);
+	_Models.push_back(quad0);
 #endif
 
 	MainLoop();	
@@ -326,7 +367,11 @@ void Scene::FixedUpdate()
 	}	
 #endif
 #ifdef A4
-	
+	_Models[0]->GetMesh().Rotate(_Models[0]->GetMesh().GetCenter(), vec3(1.0f, 1.0f, 0.0f), 2.0f);
+	_Models[1]->GetMesh().Rotate(_Models[1]->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), 2.0f);
+	_Models[2]->GetMesh().Rotate(_Models[2]->GetMesh().GetCenter(), vec3(0.0f, 0.0f, 1.0f), 2.0f);
+	_Models[3]->GetMesh().Rotate(_Models[3]->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 2.0f);
+	_PointLights[0].position = vec3(0.0f, sin(_CurrentTime) * 20.0f + 20.0f, 0.0f);
 #endif
 }
 
@@ -347,8 +392,9 @@ void Scene::Update()
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif
 #ifdef A4
+	
 	vec3 target = vec3(0.0f, 0.0f, 0.0f);
-	vec3 center = vec3(50.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 60.0f, 50.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
+	vec3 center = vec3(80.0f * sin(_CurrentTime / 10.0f * 3.1415926f), 120.0f, 80.0f * cos(_CurrentTime / 10.0f * 3.1415926f));
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif
 

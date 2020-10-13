@@ -22,6 +22,9 @@ void FrameBuffer::Resize(int width, int height)
 	Height = height;
 	Pixels.resize(Width * Height);
 	ZBuffer.resize(Width * Height);
+	size_t count = Width * Height;
+	std::vector<std::mutex> list(count);
+	ZBufferLocks.swap(list);
 }
 
 void FrameBuffer::ClearZBuffer()
