@@ -443,6 +443,8 @@ void Mesh::PointLightShadowHelper(PointLight& pl, Camera& camera, int index)
 void Mesh::CastPointLightShadow(PointLight& pl)
 {
 	Camera camera(90, pl.ShadowMap.GetResolution(), pl.ShadowMap.GetResolution());
+	
+	
 	camera.SetPose(pl.position, pl.position + vec3(1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0));
 	PointLightShadowHelper(pl, camera, 0);
 	camera.SetPose(pl.position, pl.position + vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0));
@@ -455,6 +457,7 @@ void Mesh::CastPointLightShadow(PointLight& pl)
 	PointLightShadowHelper(pl, camera, 4);
 	camera.SetPose(pl.position, pl.position + vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0));
 	PointLightShadowHelper(pl, camera, 5);
+	
 }
 
 void Mesh::LoadBin(char* filename)
@@ -886,7 +889,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 	}
 }
 
-void Mesh::ShadowMapRasterizationHelper(int i, PointLight& pl, vector<vec3>& proj, Camera& camera, std::mutex& writeMutex,
+inline void Mesh::ShadowMapRasterizationHelper(int i, PointLight& pl, vector<vec3>& proj, Camera& camera, std::mutex& writeMutex,
 	int cubeMapIndex)
 {
 	vec3 projectedVertices[3];

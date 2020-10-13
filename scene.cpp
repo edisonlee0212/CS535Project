@@ -9,9 +9,9 @@
 #include "mat3.h"
 #include "Camera.h"
 #include "Mesh.h"
-
+#define A4_1
 Scene* scene;
-float Scene::_AmbientLight = 0.05f;
+float Scene::_AmbientLight = 0.1f;
 vector<DirectionalLight> Scene::_DirectionalLights;
 vector<PointLight> Scene::_PointLights;
 
@@ -31,7 +31,7 @@ ThreadPool* Scene::GetThreadPool()
 {
 	return &_ThreadPool;
 }
-#define A4
+
 Scene::Scene()
 {
 	_GUI = new GUI();
@@ -42,14 +42,22 @@ Scene::Scene()
 	int v0 = 20;
 	int h = 720;
 	int w = 1280;
-
+	float hfov = 90.0f;
+	
+#ifdef A4_2
+	h = 360;
+	w = 640;
+	hfov = 90.0f;
+#endif
+	
+	
 	_FrameBuffer = new FrameBuffer(u0, v0, w, h, 0);
 	_FrameBuffer->label("SW frame buffer");
 	_FrameBuffer->show();
 	_FrameBuffer->redraw();
 
 	_GUI->uiw->position(u0, v0 + h + 50);
-	float hfov = 120.0f;
+	
 	_MainCamera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
 	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
@@ -59,13 +67,7 @@ Scene::Scene()
 	_DirectionalLights[0].specular = 0.7f;
 	_DirectionalLights[0].direction = vec3(0, 0, -1);
 	*/
-	_PointLights.emplace_back();
-	_PointLights[0].position = vec3(0, 50, 0);
-	_PointLights[0].diffuse = vec3(1.0);
-	_PointLights[0].specular = vec3(2.0);
-	_PointLights[0].constant = 1.0f;
-	_PointLights[0].linear = 0.001f;
-	_PointLights[0].quadratic = 0.00075f;
+	
 	
 #ifdef A2
 	auto DNA = new Mesh();
@@ -192,7 +194,15 @@ Scene::Scene()
 	_Models.push_back(quad7);
 #endif
 
-#ifdef A4
+#ifdef A4_1
+	_PointLights.emplace_back();
+	_PointLights[0].position = vec3(0, 50, 0);
+	_PointLights[0].diffuse = vec3(1.0);
+	_PointLights[0].specular = vec3(2.0);
+	_PointLights[0].constant = 1.0f;
+	_PointLights[0].linear = 0.001f;
+	_PointLights[0].quadratic = 0.00075f;
+	
 	auto bordermat = std::make_shared<Material>();
 	bordermat->SetShininess(4.0f);
 	bordermat->LoadTextureFromTiff("border.tif");
@@ -274,6 +284,102 @@ Scene::Scene()
 	_Models.push_back(quad0);
 #endif
 
+#ifdef A4_2
+	_PointLights.emplace_back();
+	_PointLights[0].position = vec3(20, 50, 0);
+	_PointLights[0].diffuse = vec3(0.2);
+	_PointLights[0].specular = vec3(0.4);
+	_PointLights[0].constant = 1.0f;
+	_PointLights[0].linear = 0.001f;
+	_PointLights[0].quadratic = 0.00075f;
+
+	_PointLights.emplace_back();
+	_PointLights[1].position = vec3(-20, 50, 0);
+	_PointLights[1].diffuse = vec3(0.2, 0.0, 0.0);
+	_PointLights[1].specular = vec3(0.4, 0.0, 0.0);
+	_PointLights[1].constant = 1.0f;
+	_PointLights[1].linear = 0.001f;
+	_PointLights[1].quadratic = 0.00075f;
+
+	_PointLights.emplace_back();
+	_PointLights[2].position = vec3(0, 50, 20);
+	_PointLights[2].diffuse = vec3(0.0, 0.2, 0.0);
+	_PointLights[2].specular = vec3(0.0, 0.4, 0.0);
+	_PointLights[2].constant = 1.0f;
+	_PointLights[2].linear = 0.001f;
+	_PointLights[2].quadratic = 0.00075f;
+
+	_PointLights.emplace_back();
+	_PointLights[3].position = vec3(0, 50, -20);
+	_PointLights[3].diffuse = vec3(0.0, 0.0, 0.2);
+	_PointLights[3].specular = vec3(0.0, 0.0, 0.4);
+	_PointLights[3].constant = 1.0f;
+	_PointLights[3].linear = 0.001f;
+	_PointLights[3].quadratic = 0.00075f;
+	
+	auto bordermat = std::make_shared<Material>();
+	bordermat->SetShininess(4.0f);
+	bordermat->LoadTextureFromTiff("border.tif");
+
+	auto orangemat = std::make_shared<Material>();
+	orangemat->SetShininess(4.0f);
+	orangemat->LoadTextureFromTiff("orange.tif");
+	auto cube1 = new Model(orangemat, true, true);
+	cube1->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	cube1->SetCenter(vec3(0.0f, 10.0f, 0.0f));
+	cube1->SetScale(vec3(1.0, 1.0, 1.0));
+	
+	auto quad0 = new Model(bordermat, true, true);
+	quad0->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad0->SetScale(vec3(1.0, 1.0, 1.0));
+	quad0->GetMesh().Rotate(quad0->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), -90.0f);
+	quad0->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	quad0->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+
+	auto quad1 = new Model(bordermat, true, true);
+	quad1->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad1->SetScale(vec3(1.0, 1.0, 1.0));
+	quad1->GetMesh().Rotate(quad1->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 90.0f);
+	quad1->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad1->SetCenter(vec3(-50.0f, 20.0f, 0.0f));
+	quad1->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+
+	auto quad2 = new Model(bordermat, true, true);
+	quad2->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad2->SetScale(vec3(1.0, 1.0, 1.0));
+	quad2->GetMesh().Rotate(quad2->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), -90.0f);
+	quad2->SetCenter(vec3(50.0f, 20.0f, 0.0f));
+	quad2->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad2->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+
+	auto quad3 = new Model(bordermat, true, true);
+	quad3->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad3->SetScale(vec3(1.0, 1.0, 1.0));
+	quad3->GetMesh().Rotate(quad3->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 0.0f);
+	quad3->SetCenter(vec3(0.0f, 20.0f, -50.0f));
+	quad3->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad3->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+
+	auto quad4 = new Model(bordermat, true, true);
+	quad4->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
+
+	quad4->SetScale(vec3(1.0, 1.0, 1.0));
+	quad4->GetMesh().Rotate(quad4->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 180.0f);
+	quad4->SetCenter(vec3(0.0f, 20.0f, 50.0f));
+	quad4->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
+	quad4->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
+
+	_Models.push_back(cube1);
+	_Models.push_back(quad1);
+	_Models.push_back(quad2);
+	_Models.push_back(quad3);
+	_Models.push_back(quad4);
+	_Models.push_back(quad0);
+#endif
 	MainLoop();	
 }
 
@@ -297,7 +403,7 @@ void Scene::Render() const
 		model->Draw(_FrameBuffer, _MainCamera, _FillMode_Texture_Bilinear);
 	}
 #endif
-#ifdef A4
+#ifdef A4_1
 	for (auto& pl : _PointLights)
 	{
 		pl.ShadowMap.Clear();
@@ -316,7 +422,25 @@ void Scene::Render() const
 		model->Draw(_FrameBuffer, _MainCamera);
 	}
 #endif
+#ifdef A4_2
+	for (auto& pl : _PointLights)
+	{
+		pl.ShadowMap.Clear();
+		for (const auto& model : _Models)
+		{
+			if (!model->Enabled)
+				continue;
+			model->GetMesh().CastPointLightShadow(pl);
+		}
+	}
 
+	for (const auto& model : _Models)
+	{
+		if (!model->Enabled)
+			continue;
+		model->Draw(_FrameBuffer, _MainCamera);
+	}
+#endif
 	_FrameBuffer->redraw();
 }
 
@@ -366,13 +490,22 @@ void Scene::FixedUpdate()
 		model->GetMesh().Rotate(model->GetMesh().GetCenter(), vec3(i % 8 > 0 ? 1 : 0, i % 4 > 0 ? 1 : 0, i % 2 > 0 ? 1 : 0), 2.0f);
 	}	
 #endif
-#ifdef A4
+#ifdef A4_1
 	_Models[0]->GetMesh().Rotate(_Models[0]->GetMesh().GetCenter(), vec3(1.0f, 1.0f, 0.0f), 2.0f);
 	_Models[1]->GetMesh().Rotate(_Models[1]->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), 2.0f);
 	_Models[2]->GetMesh().Rotate(_Models[2]->GetMesh().GetCenter(), vec3(0.0f, 0.0f, 1.0f), 2.0f);
 	_Models[3]->GetMesh().Rotate(_Models[3]->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 2.0f);
 	_PointLights[0].position = vec3(0.0f, sin(_CurrentTime) * 20.0f + 20.0f, 0.0f);
 #endif
+#ifdef A4_2
+	const float sway = 27;
+	const float height = 50;
+	_PointLights[0].position = vec3(sin(_CurrentTime) * sway + sway, height, 0.0f);
+	_PointLights[1].position = vec3(sin(_CurrentTime) * sway - sway, height, 0.0f);
+	_PointLights[2].position = vec3(0.0f, height, sin(_CurrentTime) * sway + sway);
+	_PointLights[3].position = vec3(0.0f, height, sin(_CurrentTime) * sway - sway);
+#endif
+
 }
 
 void Scene::Update()
@@ -391,8 +524,7 @@ void Scene::Update()
 	vec3 center = vec3(200.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif
-#ifdef A4
-	
+#ifdef A4_1
 	vec3 target = vec3(0.0f, 0.0f, 0.0f);
 	vec3 center = vec3(80.0f * sin(_CurrentTime / 10.0f * 3.1415926f), 120.0f, 80.0f * cos(_CurrentTime / 10.0f * 3.1415926f));
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));

@@ -48,7 +48,7 @@ public:
 			return;
 
 		int uv = (_Resolution - 1 - v) * _Resolution + u;
-		std::lock_guard<mutex> lock(_Locks[index][uv]);
+		//std::lock_guard<mutex> lock(_Locks[index][uv]);
 		if (_Data[index][uv] > z)
 			return;
 		_Data[index][uv] = z;
@@ -107,6 +107,7 @@ public:
 			}
 		}
 #pragma endregion
+		
 		vec3 proj;
 		camera.Project(dir, proj);
 		int u = proj[0] + 0.5f;

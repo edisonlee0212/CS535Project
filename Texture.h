@@ -129,6 +129,7 @@ public:
 		u = u % (_Width - 1);
 		v = v % ( _Height - 1);
 		vec3 color00, color10, color11, color01;
+		
 		color00.SetFromColor(Get(u, v));
 		color10.SetFromColor(Get(u + 1, v));
 		color11.SetFromColor(Get(u + 1, v + 1));
