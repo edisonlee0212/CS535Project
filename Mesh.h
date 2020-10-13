@@ -12,12 +12,12 @@ class Material;
 
 enum FillMode
 {
-	_FillMode_Vertex_Color_ScreenSpaceInterpolation,
-	_FillMode_Vertex_Color_ModelSpaceInterpolation,
+	_FillMode_ZBufferOnly,
 	_FillMode_Z,
 	_FillMode_Texture_Nearest,
 	_FillMode_Texture_Bilinear,
 	_FillMode_Texture_Trilinear,
+	_FillMode_Vertex_Color,
 	_FillMode_Vertex_Color_Lighting
 };
 
@@ -51,7 +51,7 @@ public:
 	void Allocate(int vertsN, int trisN);
 	void DrawCubeQuadFaces(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
 	void DrawWireFrame(FrameBuffer* fb, Camera* ppc, unsigned int color) const;
-	void DrawFilled(FrameBuffer* fb, Camera* camera, FillMode mode = _FillMode_Vertex_Color_ScreenSpaceInterpolation, Material* material = nullptr, bool receiveLight = false) const;
+	void DrawFilled(FrameBuffer* fb, Camera* camera, FillMode mode = _FillMode_Texture_Nearest, Material* material = nullptr, bool receiveLight = false) const;
 	void CastPointLightShadow(PointLight& pl);
 	void LoadBin(char* filename);
 	static vec3 SetEEQs(vec3 v0, vec3 v1, vec3 v2);

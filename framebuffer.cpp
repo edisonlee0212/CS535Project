@@ -55,16 +55,7 @@ int FrameBuffer::handle(int event)
 void FrameBuffer::KeyboardHandle()
 {
 	int key = Fl::event_key();
-	switch (key)
-	{
-	case FL_Up:
-		{
-			cerr << "INFO: pressed up key";
-			break;
-		}
-	default:
-		cerr << "INFO: do not understand keypress" << endl;
-	}
+	cout << "Pressed: " << std::to_string(key) << endl;
 }
 
 void FrameBuffer::SetBGR(unsigned int bgr)
@@ -153,10 +144,16 @@ bool FrameBuffer::Farther(int u, int v, float z)
 	if (u < 0 || u > Width - 1 || v < 0 || v > Height - 1)
 		return false;
 	int uv = (Height - 1 - v) * Width + u;
+	std::lock_guard<mutex> lock(ZBufferLocks[uv]);
 	if (z < ZBuffer[uv])
 		return false;
 	ZBuffer[uv] = z;
 	return true;
+}
+
+void FrameBuffer::ProjectImage(Camera* camera, Camera* projCamera, FrameBuffer* fb, Texture* tex)
+{
+	
 }
 
 void FrameBuffer::Draw2DSegment(vec3 p0, vec3 c0, vec3 p1, vec3 c1)

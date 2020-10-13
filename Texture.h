@@ -19,7 +19,6 @@ public:
 
 	unsigned Get(int u, int v)
 	{
-		if (u < 0 || v < 0 || u >= _Width || v >= _Height) return 0;
 		return _Pixels[(_Height - v - 1) * _Width + u];
 	}
 
@@ -129,7 +128,11 @@ public:
 		u = u % (_Width - 1);
 		v = v % ( _Height - 1);
 		vec3 color00, color10, color11, color01;
-		
+		if (u < 0) u = 0;
+		if (v < 0) v = 0;
+		if (u > _Width - 2) u = _Width - 2;
+		if (v > _Width - 2) v = _Width - 2;
+
 		color00.SetFromColor(Get(u, v));
 		color10.SetFromColor(Get(u + 1, v));
 		color11.SetFromColor(Get(u + 1, v + 1));

@@ -5,7 +5,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <GL/glut.h>
-
+#include "Texture.h"
 #include "Camera.h"
 
 class FrameBuffer : public Fl_Gl_Window
@@ -48,5 +48,6 @@ public:
 	void Draw2DSegment(vec3 p0, vec3 c0, vec3 p1, vec3 c1);
 	void DrawSquarePoint(float uf, float vf, int psize, unsigned int color);
 	bool Farther(int u, int v, float z);
+	void ProjectImage(Camera* camera, Camera* projCamera, FrameBuffer* fb, Texture* tex);
 	void ClearZBuffer();
 };

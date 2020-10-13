@@ -236,7 +236,7 @@ void Mesh::SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned in
 
 }
 
-void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned color0, unsigned color1, float tiledFactor)
+void Mesh::SetToQuad(vec3 cc, float sideLength, unsigned int color0, unsigned int color1, float tiledFactor)
 {
 	_VertsN = 4;
 	_TrisN = 2;
@@ -438,8 +438,6 @@ void Mesh::PointLightShadowHelper(PointLight& pl, Camera& camera, int index)
 #pragma endregion
 }
 
-
-
 void Mesh::CastPointLightShadow(PointLight& pl)
 {
 	Camera camera(90, pl.ShadowMap.GetResolution(), pl.ShadowMap.GetResolution());
@@ -632,8 +630,6 @@ void Mesh::Scale(vec3 value)
 	SetCenter(center);
 }
 
-
-
 inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* camera, FillMode mode, std::mutex& writeMutex, Material* material, bool calculateLighting) const
 {
 	vec3 projectedVertices[3], vertices[3], colors[3], normals[3], texCoords[3];
@@ -693,14 +689,11 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 	const auto top = static_cast<int>(bound.MinBound[1] + 0.5f);
 	const auto bottom = static_cast<int>(bound.MaxBound[1] - 0.5f);
 
-
 	mat3 screenSpaceInterpolationMat;
 	screenSpaceInterpolationMat.SetColumn(0, vec3(projectedVertices[0][0], projectedVertices[1][0], projectedVertices[2][0]));
 	screenSpaceInterpolationMat.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
 	screenSpaceInterpolationMat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
 	screenSpaceInterpolationMat = screenSpaceInterpolationMat.Inverted();
-
-
 
 	mat3 vs;
 	vs[0] = vertices[0];
@@ -721,86 +714,53 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 
 	mat3 modelSpaceInterpolationMat = GetModelSpaceInterpolationMat(vs, camera);
 	vec3 densityABC = modelSpaceInterpolationMat[0] + modelSpaceInterpolationMat[1] + modelSpaceInterpolationMat[2];
+	mat3 pvs;
+	pvs[0] = projectedVertices[0];
+	pvs[1] = projectedVertices[1];
+	pvs[2] = projectedVertices[2];
+	mat3 projVertABC = pvs.Transpose() * modelSpaceInterpolationMat;
+	
 	mat3 vertexPosABC = vs.Transpose() * modelSpaceInterpolationMat;
 	mat3 colorsABC = cs.Transpose() * modelSpaceInterpolationMat;
 	mat3 normalsABC = nms.Transpose() * modelSpaceInterpolationMat;
 	mat3 texCoordABC = ttcs.Transpose() * modelSpaceInterpolationMat;
 
-	vec3 z;
-	vec3 r, g, b;
-	if (mode == _FillMode_Vertex_Color_ScreenSpaceInterpolation)
-	{
-		r = screenSpaceInterpolationMat * vec3(colors[0][0], colors[1][0], colors[2][0]);
-		g = screenSpaceInterpolationMat * vec3(colors[0][1], colors[1][1], colors[2][1]);
-		b = screenSpaceInterpolationMat * vec3(colors[0][2], colors[1][2], colors[2][2]);
-	}
-
-	z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
+	vec3 z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
 	if(isnan(z[0]) || isnan(z[1]) || isnan(z[2])) return;
 	vec3 viewPos = camera->Center;
 
 	switch (mode)
 	{
+	case _FillMode_ZBufferOnly:
+		for (auto v = top; v <= bottom; v++)
+		{
+			for (auto u = left; u <= right; u++)
+			{
+				vec3 pixel(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pixel * eeqs[0] < 0.0f || pixel * eeqs[1] < 0.0f
+					|| pixel * eeqs[2] < 0.0f)
+					continue;
+				pixel[2] = pixel * z;
+				fb->Farther(pixel[0], pixel[1], pixel[2]);
+			}
+		}
+		break;
 	case _FillMode_Z:
 		for (auto v = top; v <= bottom; v++)
 		{
 			for (auto u = left; u <= right; u++)
 			{
-				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-					|| pix * eeqs[2] < 0.0f)
+				vec3 pixel(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
+				if (pixel * eeqs[0] < 0.0f || pixel * eeqs[1] < 0.0f
+					|| pixel * eeqs[2] < 0.0f)
 					continue;
-				vec3 ccv(pix * z, pix * z, pix * z);
-				pix[2] = pix * z;
-				std::lock_guard<std::mutex> lock(writeMutex);
-				if (!fb->Farther(pix[0], pix[1], pix[2]))
-				{
-					continue;
-				}
-				fb->Set(pix[0], pix[1], ccv.GetColor());
+				pixel[2] = pixel * z;
+				vec3 projPos = (projVertABC * pixel) / (densityABC * pixel);
+				fb->SetZ(pixel[0], pixel[1], pixel[2], vec3(projPos[2]).GetColor());
 			}
 		}
 		break;
-	case _FillMode_Vertex_Color_ModelSpaceInterpolation:
-		for (auto v = top; v <= bottom; v++)
-		{
-			for (auto u = left; u <= right; u++)
-			{
-				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-					|| pix * eeqs[2] < 0.0f)
-					continue;
-				vec3 ccv = (colorsABC * pix) / (densityABC * pix);
-				pix[2] = pix * z;
-				std::lock_guard<std::mutex> lock(writeMutex);
-				if (!fb->Farther(pix[0], pix[1], pix[2]))
-				{
-					continue;
-				}
-				fb->Set(pix[0], pix[1], ccv.GetColor());
-			}
-		}
-		break;
-	case _FillMode_Vertex_Color_ScreenSpaceInterpolation:
-		for (auto v = top; v <= bottom; v++)
-		{
-			for (auto u = left; u <= right; u++)
-			{
-				vec3 pix(.5f + static_cast<float>(u), .5f + static_cast<float>(v), 1.0f);
-				if (pix * eeqs[0] < 0.0f || pix * eeqs[1] < 0.0f
-					|| pix * eeqs[2] < 0.0f)
-					continue;
-				vec3 ccv(pix * r, pix * g, pix * b);
-				pix[2] = pix * z;
-				std::lock_guard<std::mutex> lock(writeMutex);
-				if (!fb->Farther(pix[0], pix[1], pix[2]))
-				{
-					continue;
-				}
-				fb->Set(pix[0], pix[1], ccv.GetColor());
-			}
-		}
-		break;
+	case _FillMode_Vertex_Color:
 	case _FillMode_Vertex_Color_Lighting:
 	case _FillMode_Texture_Nearest:
 	case _FillMode_Texture_Bilinear:
@@ -815,12 +775,26 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 					continue;
 				vec3 texCoord = (texCoordABC * pixel) / (densityABC * pixel);
 				vec3 normal = (normalsABC * pixel) / (densityABC * pixel);
-				if (camera->GetFront().Normalized() * normal.Normalized() > 0.3) continue;
 				vec3 fragPos = (vertexPosABC * pixel) / (densityABC * pixel);
+				unsigned surfaceColor = 0;
+				
+				if (mode == _FillMode_Vertex_Color)
+				{
+					vec3 surfaceColor = ((colorsABC * pixel) / (densityABC * pixel));
+					pixel[2] = pixel * z;
+					fb->SetZ(pixel[0], pixel[1], pixel[2], surfaceColor.GetColor());
+					continue;
+				}
+				if (mode == _FillMode_Vertex_Color_Lighting)
+				{
+					surfaceColor = ((colorsABC * pixel) / (densityABC * pixel)).GetColor();
+				}
 				pixel[2] = pixel * z;
+				if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
+				if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
 				if (material != nullptr && material->GetTexture() != nullptr) {
 					if (material->GetTexture()->IsTransparent(texCoord[0], texCoord[1])) continue;
-					unsigned surfaceColor = 0;
+					
 					switch (mode)
 					{
 					case _FillMode_Texture_Nearest:
@@ -879,8 +853,6 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				}
 				else
 				{
-					std::lock_guard<std::mutex> lock(writeMutex);
-					if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
 					fb->Set(pixel[0], pixel[1], vec3(0.5, 0, 0.5).GetColor());
 				}
 			}

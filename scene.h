@@ -18,7 +18,12 @@ class Scene
 	static float _AmbientLight;
 	static vector<DirectionalLight> _DirectionalLights;
 	static vector<PointLight> _PointLights;
-	
+	static vec3 _CameraPos;
+	static vec3 _CameraDir;
+	static Texture* _ProjTexture;
+	static vec3 _ProjPos;
+	static Camera* _ProjCamera;
+	static FrameBuffer* _ProjBuffer;
 	static ThreadPool _ThreadPool;
 	static vector<Mesh*> _Meshes;
 	static vector<Model*> _Models;

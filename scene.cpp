@@ -9,7 +9,7 @@
 #include "mat3.h"
 #include "Camera.h"
 #include "Mesh.h"
-#define A4_1
+#define A4_E2
 Scene* scene;
 float Scene::_AmbientLight = 0.1f;
 vector<DirectionalLight> Scene::_DirectionalLights;
@@ -23,6 +23,12 @@ FrameBuffer* Scene::_FrameBuffer;
 GUI* Scene::_GUI;
 float Scene::_LastTimeStep = 0;
 float Scene::_CurrentTime = 0;
+vec3 Scene::_CameraDir;
+vec3 Scene::_CameraPos;
+vec3 Scene::_ProjPos;
+Camera* Scene::_ProjCamera;
+FrameBuffer* Scene::_ProjBuffer;
+Texture* Scene::_ProjTexture;
 using namespace std;
 
 #include <iostream>
@@ -44,12 +50,17 @@ Scene::Scene()
 	int w = 1280;
 	float hfov = 90.0f;
 	
-#ifdef A4_2
+#ifdef A4_E2
 	h = 360;
 	w = 640;
 	hfov = 90.0f;
 #endif
 	
+#ifdef A4_2
+	h = 360;
+	w = 640;
+	hfov = 90.0f;
+#endif
 	
 	_FrameBuffer = new FrameBuffer(u0, v0, w, h, 0);
 	_FrameBuffer->label("SW frame buffer");
@@ -61,12 +72,7 @@ Scene::Scene()
 	_MainCamera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
 	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	/*
-	_DirectionalLights.emplace_back();
-	_DirectionalLights[0].diffuse = 0.2f;
-	_DirectionalLights[0].specular = 0.7f;
-	_DirectionalLights[0].direction = vec3(0, 0, -1);
-	*/
+
 	
 	
 #ifdef A2
@@ -114,7 +120,11 @@ Scene::Scene()
 	_Meshes.push_back(happy2);
 #endif
 #ifdef A3
-
+	_DirectionalLights.emplace_back();
+	_DirectionalLights[0].diffuse = 0.2f;
+	_DirectionalLights[0].specular = 0.7f;
+	_DirectionalLights[0].direction = vec3(0, 0, -1);
+	
 	auto windowmat = std::make_shared<Material>();
 	windowmat->SetShininess(4.0f);
 	windowmat->LoadTextureFromTiff("border.tif");
@@ -210,10 +220,16 @@ Scene::Scene()
 	auto orangemat = std::make_shared<Material>();
 	orangemat->SetShininess(4.0f);
 	orangemat->LoadTextureFromTiff("orange.tif");
-	auto cube1 = new Model(orangemat, true, true);
-	cube1->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
-	cube1->SetCenter(vec3(15.0f, 10.0f, 15.0f));
-	cube1->SetScale(vec3(1.0, 1.0, 1.0));
+	auto teapotC = new Model(orangemat, true, true);
+	teapotC->GetMesh().LoadBin("geometry/teapot1K.bin");
+	teapotC->SetCenter(vec3(10.0f, 10.0f, 10.0f));
+	teapotC->SetScale(vec3(0.2));
+
+	auto teapotR = new Model(orangemat, true, true);
+	teapotR->GetMesh().LoadBin("geometry/teapot1K.bin");
+	teapotR->SetCenter(vec3(30.0f, 10.0f, 30.0f));
+	teapotR->SetScale(vec3(0.3));
+	
 	auto cube2 = new Model(orangemat, true, true);
 	cube2->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
 	cube2->SetCenter(vec3(15.0f, 10.0f, -15.0f));
@@ -272,19 +288,20 @@ Scene::Scene()
 	quad4->GetMesh().Scale(vec3(1.0f, 0.4f, 1.0f));
 	quad4->SetDefaultFillMode(_FillMode_Vertex_Color_Lighting);
 	
-	_Models.push_back(cube1);
+	_Models.push_back(teapotC);
 	_Models.push_back(cube2);
 	_Models.push_back(cube3);
 	_Models.push_back(cube4);
-
+	
 	_Models.push_back(quad1);
 	_Models.push_back(quad2);
 	_Models.push_back(quad3);
 	_Models.push_back(quad4);
 	_Models.push_back(quad0);
+	_Models.push_back(teapotR);
 #endif
 
-#ifdef A4_2
+#ifdef A4_E2
 	_PointLights.emplace_back();
 	_PointLights[0].position = vec3(20, 50, 0);
 	_PointLights[0].diffuse = vec3(0.2);
@@ -326,7 +343,7 @@ Scene::Scene()
 	orangemat->LoadTextureFromTiff("orange.tif");
 	auto cube1 = new Model(orangemat, true, true);
 	cube1->GetMesh().SetToCube(vec3(0, 0, 0), 10, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
-	cube1->SetCenter(vec3(0.0f, 10.0f, 0.0f));
+	cube1->SetCenter(vec3(0.0f, 30.0f, 0.0f));
 	cube1->SetScale(vec3(1.0, 1.0, 1.0));
 	
 	auto quad0 = new Model(bordermat, true, true);
@@ -380,6 +397,40 @@ Scene::Scene()
 	_Models.push_back(quad4);
 	_Models.push_back(quad0);
 #endif
+
+#ifdef A4_2
+	_ProjBuffer = new FrameBuffer(u0, v0, 300, 300, 1);
+	_ProjCamera = new Camera(90, _ProjBuffer->Width, _ProjBuffer->Height);
+	_FrameBuffer->label("Proj Depth Map");
+	_ProjBuffer->show();
+	_ProjBuffer->redraw();
+	_ProjTexture = new Texture();
+	_ProjTexture->LoadTiff("cat.tif");
+	_CameraPos = vec3(0, 1, 20);
+	_CameraDir = vec3(0, 0, -1);
+	_ProjPos = vec3(0, 0, 0);
+	//_MainCamera->SetPose(vec3(.0f, 1.0f, 20.0f), vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	
+	_DirectionalLights.emplace_back();
+	_DirectionalLights[0].diffuse = 0.2f;
+	_DirectionalLights[0].specular = 0.7f;
+	_DirectionalLights[0].direction = vec3(0, 0, -1);
+	
+	auto orangemat = std::make_shared<Material>();
+	orangemat->SetShininess(4.0f);
+	orangemat->LoadTextureFromTiff("orange.tif");
+	auto bordermat = std::make_shared<Material>();
+	bordermat->SetShininess(4.0f);
+	bordermat->LoadTextureFromTiff("border.tif");
+	
+	auto audi = new Model(orangemat, true, true);
+	audi->GetMesh().LoadBin("geometry/auditorium.bin");
+	audi->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	audi->SetScale(vec3(2.0, 2.0, 2.0));
+	audi->GetMesh().Rotate(audi->GetMesh().GetCenter(), vec3(1, 0, 0), -90);
+	_Models.push_back(audi);
+
+#endif
 	MainLoop();	
 }
 
@@ -392,7 +443,7 @@ void Scene::Render() const
 	{
 		if (!mesh->Enabled)
 			continue;
-		mesh->DrawFilled(_FrameBuffer, _MainCamera, _FillMode_Vertex_Color_ScreenSpaceInterpolation);
+		mesh->DrawFilled(_FrameBuffer, _MainCamera, _FillMode_Vertex_Color);
 	}
 #endif
 #ifdef A3
@@ -423,6 +474,25 @@ void Scene::Render() const
 	}
 #endif
 #ifdef A4_2
+	_ProjBuffer->SetBGR(0xFFFFFFFF);
+	_ProjBuffer->ClearZBuffer();
+
+	for (const auto& model : _Models)
+	{
+		if (!model->Enabled)
+			continue;
+		model->Draw(_ProjBuffer, _ProjCamera, _FillMode_Z);
+	}
+	_ProjBuffer->redraw();
+	for (const auto& model : _Models)
+	{
+		if (!model->Enabled)
+			continue;
+		model->Draw(_FrameBuffer, _MainCamera);
+	}
+	_FrameBuffer->ProjectImage(_MainCamera, _ProjCamera, _ProjBuffer, _ProjTexture);
+#endif
+#ifdef A4_E2
 	for (auto& pl : _PointLights)
 	{
 		pl.ShadowMap.Clear();
@@ -461,7 +531,7 @@ void Scene::MainLoop()
 		auto stop = std::chrono::high_resolution_clock::now();
 		float lastFrameTime = _CurrentTime;
 		_CurrentTime = FpSeconds(stop - start).count();
-		cout << std::to_string(_CurrentTime - lastFrameTime) << endl;
+		//cout << std::to_string(_CurrentTime - lastFrameTime) << endl;
 		Update();
 		if (_CurrentTime - _LastTimeStep >= 0.033f)
 		{
@@ -497,7 +567,7 @@ void Scene::FixedUpdate()
 	_Models[3]->GetMesh().Rotate(_Models[3]->GetMesh().GetCenter(), vec3(0.0f, 1.0f, 0.0f), 2.0f);
 	_PointLights[0].position = vec3(0.0f, sin(_CurrentTime) * 20.0f + 20.0f, 0.0f);
 #endif
-#ifdef A4_2
+#ifdef A4_E2
 	const float sway = 27;
 	const float height = 50;
 	_PointLights[0].position = vec3(sin(_CurrentTime) * sway + sway, height, 0.0f);
@@ -529,7 +599,41 @@ void Scene::Update()
 	vec3 center = vec3(80.0f * sin(_CurrentTime / 10.0f * 3.1415926f), 120.0f, 80.0f * cos(_CurrentTime / 10.0f * 3.1415926f));
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif
+#ifdef A4_2
+	if (Fl::event_key(119)) _CameraPos[2] -= 1.0f;
+	if (Fl::event_key(115)) _CameraPos[2] += 1.0f;
+	if (Fl::event_key(97)) _CameraPos[0] -= 1.0f;
+	if (Fl::event_key(100)) _CameraPos[0] += 1.0f;
+	if (Fl::event_key(FL_Shift_L)) _CameraPos[1] += 1.0f;
+	if (Fl::event_key(FL_Control_L)) _CameraPos[1] -= 1.0f;
 
+	if (Fl::event_key(FL_Up)) {
+		_ProjPos[2] -= 1.0f;
+		if (_ProjPos[2] < -5) _ProjPos[2] = -5;
+	}
+	if (Fl::event_key(FL_Down)) {
+		_ProjPos[2] += 1.0f;
+		if (_ProjPos[2] > 5) _ProjPos[2] = 5;
+	}
+	if (Fl::event_key(FL_Left)) {
+		_ProjPos[0] -= 1.0f;
+		if (_ProjPos[0] < -15) _ProjPos[0] = -15;
+	}
+	if (Fl::event_key(FL_Right)) {
+		_ProjPos[0] += 1.0f;
+		if (_ProjPos[0] > 15) _ProjPos[0] = 15;
+	}
+	if (Fl::event_key(FL_Shift_R)) {
+		_ProjPos[1] += 1.0f;
+		if (_ProjPos[1] > 5) _ProjPos[1] = 5;
+	}
+	if (Fl::event_key(FL_Control_R)) {
+		_ProjPos[1] -= 1.0f;
+		if (_ProjPos[1] < 0) _ProjPos[1] = 0;
+	}
+	_ProjCamera->SetPose(_ProjPos, _ProjPos + vec3(0, -1, 0), vec3(0, 0, 1));
+	_MainCamera->SetPose(_CameraPos, _CameraPos + _CameraDir, vec3(0.0f, 1.0f, 0.0f));
+#endif
 }
 
 void Scene::LateUpdate()
