@@ -31,6 +31,7 @@ class Scene
 	static FrameBuffer* _FrameBuffer;
 	static GUI* _GUI;
 	static vec3 _ProjDir;
+	static int _ProjLimit;
 	static float _LastTimeStep;
 	static float _CurrentTime;
 public:

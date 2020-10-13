@@ -159,7 +159,7 @@ void FrameBuffer::ProjectImage(Camera* camera, Camera* projCamera, FrameBuffer* 
 	{
 		for(int j = 0; j < resolutionY; j++)
 		{
-			if (tex->IsTransparent(i, j)) continue;
+			if (tex->IsTransparentI(i, j)) continue;
 			vec3 proj = vec3(i, j, fb->GetZ(i, j));
 			vec3 pos = projCamera->UnProject(proj);
 			vec3 camProj;

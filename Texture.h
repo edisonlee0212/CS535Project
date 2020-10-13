@@ -12,6 +12,14 @@ class Texture
 	vector<bool> _Transparency;
 	int _Width, _Height;
 public:
+	int GetWidth() const
+	{
+		return _Width;
+	}
+	int GetHeight() const
+	{
+		return _Height;
+	}
 	Texture()
 	{
 		Resize(0, 0);
@@ -161,6 +169,10 @@ public:
 		while (nearY < 0) nearY += _Height;
 
 		return _Transparency[(_Height - nearY - 1) * _Width + nearX];
+	}
+	bool IsTransparentI(int x, int y)
+	{
+		return _Transparency[(_Height - y - 1) * _Width + x];
 	}
 };
 

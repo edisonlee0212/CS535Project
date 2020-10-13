@@ -9,7 +9,7 @@
 #include "mat3.h"
 #include "Camera.h"
 #include "Mesh.h"
-#define A4_2
+#define A4_E2
 Scene* scene;
 float Scene::_AmbientLight = 0.1f;
 vector<DirectionalLight> Scene::_DirectionalLights;
@@ -27,6 +27,7 @@ vec3 Scene::_CameraDir;
 vec3 Scene::_CameraPos;
 vec3 Scene::_ProjPos;
 vec3 Scene::_ProjDir;
+int Scene::_ProjLimit;
 Camera* Scene::_ProjCamera;
 FrameBuffer* Scene::_ProjBuffer;
 Texture* Scene::_ProjTexture;
@@ -400,6 +401,8 @@ Scene::Scene()
 #endif
 
 #ifdef A4_2
+	_ProjLimit = 0;
+	
 	_ProjBuffer = new FrameBuffer(u0, v0, 300, 300, 1);
 	_ProjCamera = new Camera(90, _ProjBuffer->Width, _ProjBuffer->Height);
 	_FrameBuffer->label("Proj Depth Map");
@@ -602,10 +605,16 @@ void Scene::Update()
 #endif
 #ifdef A4_2
 	if (Fl::event_key(44)) {
-		
+		_ProjLimit -= 5;
+		if (_ProjLimit < 0) _ProjLimit = 0;
+		_ProjTexture->SetAllTransparency(false);
+		_ProjTexture->SetTransparencyRange(_ProjTexture->GetWidth() / 2 - _ProjLimit, _ProjTexture->GetWidth() / 2 + _ProjLimit, _ProjTexture->GetHeight() / 2 - _ProjLimit, _ProjTexture->GetHeight() / 2+ _ProjLimit, true);
 	}
 	if (Fl::event_key(46)) {
-		
+		_ProjLimit += 5;
+		if (_ProjLimit > 140) _ProjLimit = 140;
+		_ProjTexture->SetAllTransparency(false);
+		_ProjTexture->SetTransparencyRange(_ProjTexture->GetWidth() / 2 - _ProjLimit, _ProjTexture->GetWidth() / 2 + _ProjLimit, _ProjTexture->GetHeight() / 2 - _ProjLimit, _ProjTexture->GetHeight() / 2 + _ProjLimit, true);
 	}
 	if (Fl::event_key(119)) {
 		_ProjDir[2] -= 0.2f;
