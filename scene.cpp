@@ -40,8 +40,8 @@ Scene::Scene()
 
 	int u0 = 20;
 	int v0 = 20;
-	int h = 600;
-	int w = 800;
+	int h = 1280;
+	int w = 720;
 
 	_FrameBuffer = new FrameBuffer(u0, v0, w, h, 0);
 	_FrameBuffer->label("SW frame buffer");
@@ -49,7 +49,7 @@ Scene::Scene()
 	_FrameBuffer->redraw();
 
 	_GUI->uiw->position(u0, v0 + h + 50);
-	float hfov = 75.0f;
+	float hfov = 90.0f;
 	_MainCamera = new Camera(hfov, _FrameBuffer->Width, _FrameBuffer->Height);
 
 	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
@@ -60,12 +60,12 @@ Scene::Scene()
 	_DirectionalLights[0].direction = vec3(0, 0, -1);
 	*/
 	_PointLights.emplace_back();
-	_PointLights[0].position = vec3(0, 20, 0);
-	_PointLights[0].diffuse = vec3(1.0);
-	_PointLights[0].specular = vec3(0.5);
+	_PointLights[0].position = vec3(0, 50, 0);
+	_PointLights[0].diffuse = vec3(2.0);
+	_PointLights[0].specular = vec3(2.0);
 	_PointLights[0].constant = 1.0f;
-	_PointLights[0].linear = 0.000f;
-	_PointLights[0].quadratic = 0.0075f;
+	_PointLights[0].linear = 0.001f;
+	_PointLights[0].quadratic = 0.00075f;
 	
 #ifdef A2
 	auto DNA = new Mesh();
@@ -219,7 +219,7 @@ Scene::Scene()
 	cube4->SetScale(vec3(1.0, 1.0, 1.0));
 	
 	auto quad = new Model(bordermat, true, true);
-	quad->GetMesh().SetToQuad(vec3(0, 0, 0), 100, vec3(32, 32, 32).GetColor(), vec3(32, 32, 32).GetColor());
+	quad->GetMesh().SetToQuad(vec3(0, -40, 0), 100, vec3(0.8).GetColor(), vec3(0.8).GetColor());
 	
 	quad->SetScale(vec3(1.0, 1.0, 1.0));
 	quad->GetMesh().Rotate(quad->GetMesh().GetCenter(), vec3(1.0f, 0.0f, 0.0f), -90.0f);
@@ -345,7 +345,13 @@ void Scene::Update()
 	vec3 target = vec3(0.0f, 0.0f, 0.0f);
 	vec3 center = vec3(200.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
-#endif	
+#endif
+#ifdef A4
+	vec3 target = vec3(0.0f, 0.0f, 0.0f);
+	vec3 center = vec3(50.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 60.0f, 50.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
+	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
+#endif
+
 }
 
 void Scene::LateUpdate()

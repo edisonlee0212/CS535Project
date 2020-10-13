@@ -5,6 +5,8 @@
 #include <tiffio.h>
 #include <vector>
 
+
+#include "Camera.h"
 #include "vec3.h"
 
 class CubeShadowMap
@@ -13,7 +15,7 @@ class CubeShadowMap
 	std::vector<std::vector<float>> _Data;
 public:
 	unsigned GetResolution() { return _Resolution; }
-	CubeShadowMap(unsigned resolution = 256) : _Resolution(resolution)
+	CubeShadowMap(unsigned resolution = 512) : _Resolution(resolution)
 	{
 		_Data.resize(6);
 		Reallocate(resolution);
@@ -47,7 +49,67 @@ public:
 	}
 	float GetZ(vec3 dir)
 	{
-		return 0.0f;
+		float absX = abs(dir[0]);
+		float absY = abs(dir[1]);
+		float absZ = abs(dir[2]);
+		Camera camera(90, _Resolution, _Resolution);
+		int index = 0;
+#pragma region Check faces
+		if (absX > absY && absX > absZ)
+		{
+			if (dir[0] > 0)
+			{
+				//PX
+				camera.SetPose(vec3(0.0), vec3(1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0));
+				index = 0;
+			}
+			else
+			{
+				//NX
+				camera.SetPose(vec3(0.0), vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0));
+				index = 1;
+			}
+		}
+		else if (absY > absZ)
+		{
+			if (dir[1] > 0)
+			{
+				//PY
+				camera.SetPose(vec3(0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0));
+				index = 2;
+			}
+			else
+			{
+				//NY
+				camera.SetPose(vec3(0.0), vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0));
+				index = 3;
+			}
+		}
+		else
+		{
+			if (dir[2] > 0)
+			{
+				//PZ
+				camera.SetPose(vec3(0.0), vec3(0.0, 0.0, 1.0), vec3(0.0, -1.0, 0.0));
+				index = 4;
+			}
+			else
+			{
+				//NZ
+				camera.SetPose(vec3(0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0));
+				index = 5;
+			}
+		}
+#pragma endregion
+		vec3 proj;
+		camera.Project(dir, proj);
+		int u = proj[0] + 0.5f;
+		int v = proj[1] + 0.5f;
+		if (u < 0 || v < 0 || u > _Resolution - 1 || v > _Resolution - 1)
+			return 999999.0;
+		int uv = (_Resolution - 1 - v) * _Resolution + u;
+		
+		return _Data[index][uv];
 	}
 	void SaveAsTiff(std::string fileName) const
 	{

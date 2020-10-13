@@ -812,6 +812,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 					continue;
 				vec3 texCoord = (texCoordABC * pixel) / (densityABC * pixel);
 				vec3 normal = (normalsABC * pixel) / (densityABC * pixel);
+				vec3 fragPos = (vertexPosABC * pixel) / (densityABC * pixel);
 				pixel[2] = pixel * z;
 				
 				std::lock_guard<std::mutex> lock(writeMutex);
@@ -839,7 +840,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 					{
 						vec3 surfaceColV3;
 						surfaceColV3.SetFromColor(surfaceColor);
-						vec3 fragPos = ((vertexPosABC * pixel) / (densityABC * pixel)).Normalized();
+						
 						vec3 viewDir = (viewPos - fragPos).Normalized();
 
 						vec3 result = vec3(Scene::_AmbientLight);
@@ -856,25 +857,24 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 						for (auto& pl : Scene::_PointLights)
 						{
 							vec3 fragToLight = fragPos - pl.position;
-							float closestDepth = pl.ShadowMap.GetZ(fragToLight);
-							float currentDepth = fragToLight.Length();
-							float bias = 0.05f;
-							float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
-
-							float distance = (pl.position - fragPos).Length();
-							vec3 lightDir = (pl.position - fragPos).Normalized();
-							vec3 diffuse = pl.diffuse * max(normal * lightDir, 0.0f);
-							vec3 halfwayDir = (lightDir + viewDir).Normalized();
-							vec3 specular = pl.specular * pow(max((normal * halfwayDir), 0.0f), material->_Shininess);
-							float attenuation = 1.0f / (pl.constant + pl.linear * distance + pl.quadratic * (distance * distance));
-							result = result + ((diffuse + specular) * attenuation);
-							
+							float closestDepth = pl.ShadowMap.GetZ(fragToLight.Normalized());
+							float currentDepth = pixel[2];
+							float bias = 0.001f;
+							if (currentDepth - bias > closestDepth) {
+								float distance = (pl.position - fragPos).Length();
+								vec3 lightDir = (pl.position - fragPos).Normalized();
+								vec3 diffuse = pl.diffuse * max(normal * lightDir, 0.0f);
+								vec3 halfwayDir = (lightDir + viewDir).Normalized();
+								vec3 specular = pl.specular * pow(max((normal * halfwayDir), 0.0f), material->_Shininess);
+								float attenuation = 1.0f / (pl.constant + pl.linear * distance + pl.quadratic * (distance * distance));
+								result = result + ((diffuse + specular) * attenuation);
+							}
 						}
-						if (result[0] > 1.0) result[0] = 1.0;
-						if (result[1] > 1.0) result[1] = 1.0;
-						if (result[2] > 1.0) result[2] = 1.0;
-						surfaceColor = surfaceColV3.Multiply(result).GetColor();
-
+						vec3 finalColor = surfaceColV3.Multiply(result);
+						if (finalColor[0] > 1.0) finalColor[0] = 1.0;
+						if (finalColor[1] > 1.0) finalColor[1] = 1.0;
+						if (finalColor[2] > 1.0) finalColor[2] = 1.0;
+						surfaceColor = finalColor.GetColor();
 					}
 					fb->SetZ(pixel[0], pixel[1], pixel[2], surfaceColor);
 				}
@@ -937,28 +937,7 @@ void Mesh::ShadowMapRasterizationHelper(int i, CubeShadowMap& shadowMap, vector<
 	screenSpaceInterpolationMat.SetColumn(1, vec3(projectedVertices[0][1], projectedVertices[1][1], projectedVertices[2][1]));
 	screenSpaceInterpolationMat.SetColumn(2, vec3(1.0f, 1.0f, 1.0f));
 	screenSpaceInterpolationMat = screenSpaceInterpolationMat.Inverted();
-
-
-
-	mat3 vs;
-	vs[0] = vertices[0];
-	vs[1] = vertices[1];
-	vs[2] = vertices[2];
-
-
-	mat3 modelSpaceInterpolationMat = GetModelSpaceInterpolationMat(vs, &camera);
-	vec3 densityABC = modelSpaceInterpolationMat[0] + modelSpaceInterpolationMat[1] + modelSpaceInterpolationMat[2];
-	mat3 vertexPosABC = vs.Transpose() * modelSpaceInterpolationMat;
-
-	vec3 z;
-	vec3 r, g, b;
-
-
-	z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
-
-	vec3 viewPos = camera.Center;
-
-
+	vec3 z = screenSpaceInterpolationMat * vec3(projectedVertices[0][2], projectedVertices[1][2], projectedVertices[2][2]);
 	for (auto v = top; v <= bottom; v++)
 	{
 		for (auto u = left; u <= right; u++)
@@ -971,7 +950,6 @@ void Mesh::ShadowMapRasterizationHelper(int i, CubeShadowMap& shadowMap, vector<
 			pixel[2] = pixel * z;
 			std::lock_guard<std::mutex> lock(writeMutex);
 			shadowMap.SetZ(pixel[0], pixel[1], pixel[2], cubeMapIndex);
-			
 		}
 	}
 
