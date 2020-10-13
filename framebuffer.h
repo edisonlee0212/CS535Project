@@ -27,6 +27,10 @@ public:
 
 		Pixels[(Height - 1 - v) * Width + u] = color;
 	}
+	float GetZ(int u, int v)
+	{
+		return ZBuffer[(Height - 1 - v) * Width + u];
+	}
 	void Resize(int width, int height);
 	void SetZ(int u, int v, float z, unsigned int color)
 	{

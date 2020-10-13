@@ -9,7 +9,7 @@
 #include "mat3.h"
 #include "Camera.h"
 #include "Mesh.h"
-#define A4_E2
+#define A4_2
 Scene* scene;
 float Scene::_AmbientLight = 0.1f;
 vector<DirectionalLight> Scene::_DirectionalLights;
@@ -26,6 +26,7 @@ float Scene::_CurrentTime = 0;
 vec3 Scene::_CameraDir;
 vec3 Scene::_CameraPos;
 vec3 Scene::_ProjPos;
+vec3 Scene::_ProjDir;
 Camera* Scene::_ProjCamera;
 FrameBuffer* Scene::_ProjBuffer;
 Texture* Scene::_ProjTexture;
@@ -405,11 +406,11 @@ Scene::Scene()
 	_ProjBuffer->show();
 	_ProjBuffer->redraw();
 	_ProjTexture = new Texture();
-	_ProjTexture->LoadTiff("cat.tif");
-	_CameraPos = vec3(0, 1, 20);
-	_CameraDir = vec3(0, 0, -1);
+	_ProjDir = vec3(0, -1, 0);
+	_ProjTexture->LoadTiff("happy.tif");
+	_CameraPos = vec3(0, 1, 15);
+	_CameraDir = vec3(0, -0.2f, -1);
 	_ProjPos = vec3(0, 0, 0);
-	//_MainCamera->SetPose(vec3(.0f, 1.0f, 20.0f), vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	
 	_DirectionalLights.emplace_back();
 	_DirectionalLights[0].diffuse = 0.2f;
@@ -600,13 +601,37 @@ void Scene::Update()
 	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 #endif
 #ifdef A4_2
-	if (Fl::event_key(119)) _CameraPos[2] -= 1.0f;
-	if (Fl::event_key(115)) _CameraPos[2] += 1.0f;
-	if (Fl::event_key(97)) _CameraPos[0] -= 1.0f;
-	if (Fl::event_key(100)) _CameraPos[0] += 1.0f;
-	if (Fl::event_key(FL_Shift_L)) _CameraPos[1] += 1.0f;
-	if (Fl::event_key(FL_Control_L)) _CameraPos[1] -= 1.0f;
-
+	if (Fl::event_key(44)) {
+		
+	}
+	if (Fl::event_key(46)) {
+		
+	}
+	if (Fl::event_key(119)) {
+		_ProjDir[2] -= 0.2f;
+		if (_ProjDir[2] < -5) _ProjDir[2] = -5;
+	}
+	if (Fl::event_key(115)) {
+		_ProjDir[2] += 0.2f;
+		if (_ProjDir[2] > 5) _ProjDir[2] = 5;
+	}
+	if (Fl::event_key(97)) {
+		_ProjDir[0] -= 0.2f;
+		if (_ProjDir[0] < -5) _ProjDir[0] = -5;
+	}
+	if (Fl::event_key(100)) {
+		_ProjDir[0] += 0.2f;
+		if (_ProjDir[0] > 5) _ProjDir[0] = 5;
+	}
+	if (Fl::event_key(FL_Shift_L)) {
+		_CameraPos[1] += 0.2f;
+		if (_CameraPos[1] > 5) _CameraPos[1] = 5;
+	}
+	if (Fl::event_key(FL_Control_L)) {
+		_CameraPos[1] -= 0.2f;
+		if (_CameraPos[1] < -3) _CameraPos[1] = -3;
+	}
+	
 	if (Fl::event_key(FL_Up)) {
 		_ProjPos[2] -= 1.0f;
 		if (_ProjPos[2] < -5) _ProjPos[2] = -5;
@@ -629,9 +654,9 @@ void Scene::Update()
 	}
 	if (Fl::event_key(FL_Control_R)) {
 		_ProjPos[1] -= 1.0f;
-		if (_ProjPos[1] < 0) _ProjPos[1] = 0;
+		if (_ProjPos[1] < -3) _ProjPos[1] = -3;
 	}
-	_ProjCamera->SetPose(_ProjPos, _ProjPos + vec3(0, -1, 0), vec3(0, 0, 1));
+	_ProjCamera->SetPose(_ProjPos, _ProjPos + _ProjDir, vec3(0, 0, 1));
 	_MainCamera->SetPose(_CameraPos, _CameraPos + _CameraDir, vec3(0.0f, 1.0f, 0.0f));
 #endif
 }

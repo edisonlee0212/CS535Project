@@ -153,7 +153,20 @@ bool FrameBuffer::Farther(int u, int v, float z)
 
 void FrameBuffer::ProjectImage(Camera* camera, Camera* projCamera, FrameBuffer* fb, Texture* tex)
 {
-	
+	int resolutionX = fb->Width;
+	int resolutionY = fb->Height;
+	for(int i = 0; i < resolutionX; i++)
+	{
+		for(int j = 0; j < resolutionY; j++)
+		{
+			if (tex->IsTransparent(i, j)) continue;
+			vec3 proj = vec3(i, j, fb->GetZ(i, j));
+			vec3 pos = projCamera->UnProject(proj);
+			vec3 camProj;
+			camera->Project(pos, camProj);
+			Set(camProj[0], camProj[1], tex->Get(i, j));
+		}
+	}
 }
 
 void FrameBuffer::Draw2DSegment(vec3 p0, vec3 c0, vec3 p1, vec3 c1)

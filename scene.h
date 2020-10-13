@@ -30,6 +30,7 @@ class Scene
 	static Camera* _MainCamera;
 	static FrameBuffer* _FrameBuffer;
 	static GUI* _GUI;
+	static vec3 _ProjDir;
 	static float _LastTimeStep;
 	static float _CurrentTime;
 public:
