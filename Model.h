@@ -32,12 +32,12 @@ public:
 	
 	Mesh& GetMesh() { return _Mesh; }
 	std::shared_ptr<Material> GetMaterial() const { return _Material; }
-	void Draw(FrameBuffer* fb, Camera* camera, FillMode mode)
+	void Draw(FrameBuffer* fb, Camera* camera, FillMode mode) const
 	{
 		_Mesh.DrawFilled(fb, camera, mode, _Material.get(), _ReceiveLight);
 	}
 
-	void Draw(FrameBuffer* fb, Camera* camera)
+	void Draw(FrameBuffer* fb, Camera* camera) const
 	{
 		_Mesh.DrawFilled(fb, camera, _DefaultFillMode, _Material.get(), _ReceiveLight);
 	}

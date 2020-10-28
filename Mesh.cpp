@@ -760,6 +760,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 			}
 		}
 		break;
+	case _FillMode_Environment_Reflection:
 	case _FillMode_Vertex_Color:
 	case _FillMode_Vertex_Color_Lighting:
 	case _FillMode_Texture_Nearest:
@@ -777,7 +778,15 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				vec3 normal = (normalsABC * pixel) / (densityABC * pixel);
 				vec3 fragPos = (vertexPosABC * pixel) / (densityABC * pixel);
 				unsigned surfaceColor = 0;
-				
+				if(mode == _FillMode_Environment_Reflection)
+				{
+					vec3 viewDir = (fragPos - viewPos).Normalized();
+					vec3 reflectedDir = viewDir.Reflect(normal).Normalized();
+					unsigned reflectionColor = Scene::_Skybox.Get(reflectedDir);
+					pixel[2] = pixel * z;
+					fb->SetZ(pixel[0], pixel[1], pixel[2], reflectionColor);
+					continue;
+				}
 				if (mode == _FillMode_Vertex_Color)
 				{
 					vec3 surfaceColor = ((colorsABC * pixel) / (densityABC * pixel));
@@ -791,10 +800,8 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				}
 				pixel[2] = pixel * z;
 				if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
-				if (!fb->Farther(pixel[0], pixel[1], pixel[2])) continue;
 				if (material != nullptr && material->GetTexture() != nullptr) {
 					if (material->GetTexture()->IsTransparent(texCoord[0], texCoord[1])) continue;
-					
 					switch (mode)
 					{
 					case _FillMode_Texture_Nearest:
@@ -814,9 +821,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 					{
 						vec3 surfaceColV3;
 						surfaceColV3.SetFromColor(surfaceColor);
-						
 						vec3 viewDir = (viewPos - fragPos).Normalized();
-
 						vec3 result = vec3(Scene::_AmbientLight);
 						for (auto& dl : Scene::_DirectionalLights)
 						{
@@ -826,7 +831,6 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 							vec3 specular = dl.specular * pow(max((normal * halfwayDir), 0.0f), material->_Shininess);
 							result = result + diffuse + specular;
 						}
-
 						for (auto& pl : Scene::_PointLights)
 						{
 							vec3 fragToLight = fragPos - pl.position;
@@ -849,7 +853,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 						if (finalColor[2] > 1.0) finalColor[2] = 1.0;
 						surfaceColor = finalColor.GetColor();
 					}
-					fb->SetZ(pixel[0], pixel[1], pixel[2], surfaceColor);
+					fb->Set(pixel[0], pixel[1], surfaceColor);
 				}
 				else
 				{

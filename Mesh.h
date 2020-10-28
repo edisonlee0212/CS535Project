@@ -18,7 +18,8 @@ enum FillMode
 	_FillMode_Texture_Bilinear,
 	_FillMode_Texture_Trilinear,
 	_FillMode_Vertex_Color,
-	_FillMode_Vertex_Color_Lighting
+	_FillMode_Vertex_Color_Lighting,
+	_FillMode_Environment_Reflection
 };
 
 class Mesh

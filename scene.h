@@ -9,6 +9,8 @@
 #include <vector>
 
 
+
+#include "Cubemap.h"
 #include "Light.h"
 #include "Model.h"
 
@@ -32,20 +34,26 @@ class Scene
 	static GUI* _GUI;
 	static vec3 _ProjDir;
 	static int _ProjLimit;
+	static float _RollAngle;
+	static float _VerticalAngle;
+	static float _HorizontalAngle;
+	static float _Distance;
 	static float _LastTimeStep;
 	static float _CurrentTime;
+	static float _DeltaTime;
+	static Cubemap _Skybox;
 public:
 	static ThreadPool* GetThreadPool();
 	Scene();
 	static void DBG();
 	static void NewButton();
-	void Render() const;
+	static void Render();
+	static void RenderSkybox();
+	static void MainLoop();
 
-	void MainLoop();
-	
-	void FixedUpdate();
-	void Update();
-	void LateUpdate();
+	static void FixedUpdate();
+	static void Update();
+	static void LateUpdate();
 };
 
 extern Scene* scene;

@@ -1,5 +1,5 @@
 #pragma once
-#include "CubeShadowMap.h"
+#include "PointShadowMap.h"
 #include "vec3.h"
 
 struct DirectionalLight {
@@ -17,5 +17,5 @@ struct PointLight {
     float linear;
     float quadratic;
 
-    CubeShadowMap ShadowMap;
+    PointShadowMap ShadowMap;
 };

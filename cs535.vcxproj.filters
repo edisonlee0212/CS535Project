@@ -60,7 +60,10 @@
     <ClInclude Include="Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CubeShadowMap.h">
+    <ClInclude Include="PointShadowMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cubemap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -101,7 +104,10 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CubeShadowMap.cpp">
+    <ClCompile Include="PointShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Cubemap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

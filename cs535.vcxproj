@@ -92,7 +92,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bounds.h" />
-    <ClInclude Include="CubeShadowMap.h" />
+    <ClInclude Include="Cubemap.h" />
+    <ClInclude Include="PointShadowMap.h" />
     <ClInclude Include="framebuffer.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="gui.h" />
@@ -110,7 +111,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Bounds.cpp" />
-    <ClCompile Include="CubeShadowMap.cpp" />
+    <ClCompile Include="Cubemap.cpp" />
+    <ClCompile Include="PointShadowMap.cpp" />
     <ClCompile Include="framebuffer.cpp" />
     <ClCompile Include="gui.cxx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
