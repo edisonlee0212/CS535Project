@@ -624,8 +624,9 @@ void Mesh::Scale(vec3 value)
 		_Verts[i][1] *= value[1];
 		_Verts[i][2] *= value[2];
 	}
-	for (size_t i = 0; i < results.size(); i++) {
-		results[i].wait();
+	for (auto& result : results)
+	{
+		result.wait();
 	}
 	SetCenter(center);
 }
@@ -782,7 +783,7 @@ inline void Mesh::RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj
 				{
 					vec3 viewDir = (fragPos - viewPos).Normalized();
 					vec3 reflectedDir = viewDir.Reflect(normal).Normalized();
-					unsigned reflectionColor = Scene::_Skybox.Get(reflectedDir);
+					unsigned reflectionColor = Scene::_Skybox.GetBilinear(reflectedDir);
 					pixel[2] = pixel * z;
 					fb->SetZ(pixel[0], pixel[1], pixel[2], reflectionColor);
 					continue;

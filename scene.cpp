@@ -48,7 +48,7 @@ Scene::Scene()
 	const int windowPosY = 20;
 	int windowWidth = 1280;
 	int windowHeight = 720;
-	float fov = 90.0f;
+	float fov = 60.0f;
 #pragma region Previous Assignments
 #ifdef A4_E2
 	windowHeight = 1280;
@@ -61,8 +61,8 @@ Scene::Scene()
 	fov = 90.0f;
 #endif
 #ifdef A5
-	windowWidth = 640;
-	windowHeight = 360;
+	//windowWidth = 640;
+	//windowHeight = 360;
 	fov = 90.0f;
 #endif
 #pragma endregion
@@ -543,16 +543,24 @@ void Scene::RenderSkybox()
 {
 	int resolutionX = _MainCamera->Width;
 	int resolutionY = _MainCamera->Height;
+	std::vector<shared_future<void>> results;
 	for (int i = 0; i < resolutionX; i++)
 	{
-		for (int j = 0; j < resolutionY; j++)
+		results.push_back(_ThreadPool.Push([resolutionY, i](int id)
 		{
-			vec3 proj = vec3(i, j, 1.0f);
-			vec3 pos = _MainCamera->UnProject(proj);
-			vec3 dir = pos - _MainCamera->Center;
-			unsigned color = _Skybox.GetBilinear(dir);
-			_FrameBuffer->SetZ(i, j, 0, color);
-		}
+				for (int j = 0; j < resolutionY; j++)
+				{
+					vec3 proj = vec3(i, j, 1.0f);
+					vec3 pos = _MainCamera->UnProject(proj);
+					vec3 dir = pos - _MainCamera->Center;
+					unsigned color = _Skybox.GetBilinear(dir);
+					_FrameBuffer->SetZ(i, j, 0, color);
+				}
+		}).share());
+	}
+	for (auto& result : results)
+	{
+		result.wait();
 	}
 }
 
@@ -625,9 +633,11 @@ void Scene::Update()
 	const float speed = 1.0f;
 	if (Fl::event_key(FL_Up)) {
 		_VerticalAngle -= _DeltaTime * speed;
+		if (_VerticalAngle < -88.0f) _VerticalAngle = -88.0f;
 	}
 	if (Fl::event_key(FL_Down)) {
 		_VerticalAngle += _DeltaTime * speed;
+		if(_VerticalAngle > 88.0f) _VerticalAngle = 88.0f;
 	}
 	if (Fl::event_key(FL_Left)) {
 		_HorizontalAngle += _DeltaTime * speed;
@@ -636,10 +646,10 @@ void Scene::Update()
 		_HorizontalAngle -= _DeltaTime * speed;
 	}
 	if (Fl::event_key(FL_Shift_R)) {
-		_RollAngle += _DeltaTime * speed;
+		_RollAngle += _DeltaTime * speed * 50;
 	}
 	if (Fl::event_key(FL_Control_R)) {
-		_RollAngle -= _DeltaTime * speed;
+		_RollAngle -= _DeltaTime * speed * 50;
 	}
 	if (Fl::event_key(FL_Shift_L)) {
 		_Distance -= _DeltaTime * speed * 10;
@@ -655,7 +665,8 @@ void Scene::Update()
 		sin(_VerticalAngle),
 		cos(_HorizontalAngle) * cos(_VerticalAngle)
 	);
-	_MainCamera->SetPose(viewDir.Normalized() * _Distance, vec3(0), vec3(0.0f, 1.0f, 0.0f));
+	vec3 up = vec3(0.0f, 1.0f, 0.0f).RotateVector(viewDir, _RollAngle);
+	_MainCamera->SetPose(viewDir.Normalized() * _Distance, vec3(0), up);
 #endif
 #pragma region Previous Assignments
 #ifdef A2
