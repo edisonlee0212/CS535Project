@@ -2,7 +2,6 @@
 
 #include <mutex>
 #include <vector>
-#include <GL/glut.h>
 #include "Texture.h"
 #include "Camera.h"
 
