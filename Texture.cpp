@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "Texture.h"
-
+#include "stb_image.h"
 void Texture::LoadTiff(std::string fileName)
 {
+	
 	TIFF* in = TIFFOpen(fileName.c_str(), "r");
 	if (in == nullptr)
 	{
@@ -23,9 +24,14 @@ void Texture::LoadTiff(std::string fileName)
 	}
 	TIFFClose(in);
 	SetAllTransparency(false);
+	
 	glGenTextures(1, &_ID);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _ID);
-	glTexImage2D(GL_TEXTURE_2D, 1, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_INT_10_10_10_2, _Pixels.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, _Pixels.data());
 	Loaded = true;
 }

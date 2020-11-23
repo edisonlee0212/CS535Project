@@ -43,7 +43,7 @@ using namespace std;
 void main()
 {
 	int windowWidth = 1280;
-	int windowHeight = 720;
+ 	int windowHeight = 720;
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -229,15 +229,19 @@ void Scene::Update()
 		if (i % 8 == 0) i++;
 		model->GetMesh().Rotate(model->GetMesh().GetCenter(), vec3(i % 8 > 0 ? 1 : 0, i % 4 > 0 ? 1 : 0, i % 2 > 0 ? 1 : 0), _DeltaTime * 10.0f);
 	}
-	
-	vec3 target = vec3(0.0f, 0.0f, 0.0f);
-	vec3 center = vec3(200.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
-	//_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 	if (glfwGetKey(_Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		_EnableWireFrameMode = true;
 	}else if(glfwGetKey(_Window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
 		_EnableWireFrameMode = false;
+	}
+
+	if (glfwGetKey(_Window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+		_EnableTextureMapping = true;
+	}
+	else if (glfwGetKey(_Window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
+	{
+		_EnableTextureMapping = false;
 	}
 }
 

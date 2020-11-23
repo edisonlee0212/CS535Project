@@ -31,27 +31,28 @@ void Mesh::RenderHW(std::shared_ptr<Material>& material, bool enableTextureMappi
 	// if the TMesh is to be textured
 		// enable texturing
 		// bind texture handle for the texture to be used
-	if (enableTextureMapping && material->GetTexture()->Loaded)
+	const bool textureMapping = enableTextureMapping && material->GetTexture()->Loaded;
+	if (textureMapping)
 	{
 		glEnable(GL_TEXTURE_2D);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material->GetTexture()->ID());
 	}
 	glEnableClientState(GL_VERTEX_ARRAY);
-	if (HasColors) glEnableClientState(GL_COLOR_ARRAY);
+	if (!textureMapping && HasColors) glEnableClientState(GL_COLOR_ARRAY);
 	if (HasNormals) glEnableClientState(GL_NORMAL_ARRAY);
 	if (HasTexCoords) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, (float*)_Verts.data());
-	if (HasColors) glColorPointer(3, GL_FLOAT, 0, (float*)_Colors.data());
+	if (!textureMapping && HasColors) glColorPointer(3, GL_FLOAT, 0, (float*)_Colors.data());
 	if (HasNormals) glNormalPointer(GL_FLOAT, 0, (float*)_Normals.data());
 	if (HasTexCoords) glTexCoordPointer(2, GL_FLOAT, 0, (float*)_TexCoords.data());
 	// if TMesh is to be textured, provide texture coordinates for each vertex
 	glDrawElements(GL_TRIANGLES, 3 * _TrisN, GL_UNSIGNED_INT, _Tris.data());
 	if (HasNormals) glDisableClientState(GL_NORMAL_ARRAY);
-	if (HasColors) glDisableClientState(GL_COLOR_ARRAY);
+	if (!textureMapping && HasColors) glDisableClientState(GL_COLOR_ARRAY);
 	if (HasTexCoords) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	if (enableTextureMapping && material->GetTexture()->Loaded)
+	if (textureMapping)
 	{
 		glDisable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, 0);
