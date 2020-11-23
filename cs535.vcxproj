@@ -43,23 +43,23 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>externals/stb-master;include;$(IncludePath)</IncludePath>
+    <IncludePath>externals\glfw;externals/stb-master;include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>externals\glew-2.1.0\include;externals/stb-master;include;$(IncludePath)</IncludePath>
+    <IncludePath>externals\glfw;externals\glew-2.1.0\include;externals/stb-master;include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\include;externals\freeglut-3.0.0\include;externals\Cg\include;externals\fltk-1.3.4-1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\include;externals\Cg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>GLEW_STATIC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\lib\Release\x64;externals\freeglut-3.0.0\lib;externals\fltk-1.3.4-1\lib;externals\Cg\lib.x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32s.lib;libtiff.lib;opengl32.lib;glut32.lib;cg.lib;cgGL.lib;fltkd.lib;fltkgld.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\lib\Release\x64;externals\freeglut-3.0.0\lib;externals\Cg\lib.x64;externals\glfw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glfw3.lib;glew32.lib;libtiff.lib;opengl32.lib;glut32.lib;cg.lib;cgGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -69,15 +69,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\include;externals\freeglut-3.0.0\include;externals\Cg\include;externals\fltk-1.3.4-1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLEW_STATIC;NDEBUG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\include;externals\Cg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\lib\Release\x64;externals\freeglut-3.0.0\lib;externals\fltk-1.3.4-1\lib;externals\Cg\lib.x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32s.lib;libtiff.lib;opengl32.lib;glut32.lib;cg.lib;cgGL.lib;fltk.lib;fltkgl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>externals\tiff-4.0.8\libtiff;externals\glew-2.1.0\lib\Release\x64;externals\freeglut-3.0.0\lib;externals\fltk-1.3.4-1\lib;externals\Cg\lib.x64;externals\glfw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glfw3.lib;glew32.lib;libtiff.lib;opengl32.lib;glut32.lib;cg.lib;cgGL.lib;fltk.lib;fltkgl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -93,12 +93,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bounds.h" />
-    <ClInclude Include="CGInterface.h" />
     <ClInclude Include="Cubemap.h" />
     <ClInclude Include="PointShadowMap.h" />
     <ClInclude Include="framebuffer.h" />
-    <ClInclude Include="glext.h" />
-    <ClInclude Include="gui.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="mat3.h" />
     <ClInclude Include="Camera.h" />
@@ -113,14 +110,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Bounds.cpp" />
-    <ClCompile Include="CGInterface.cpp" />
     <ClCompile Include="Cubemap.cpp" />
     <ClCompile Include="PointShadowMap.cpp" />
     <ClCompile Include="framebuffer.cpp" />
-    <ClCompile Include="gui.cxx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="mat3.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Material.cpp" />

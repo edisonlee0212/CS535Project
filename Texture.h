@@ -2,7 +2,6 @@
 #include <iostream>
 #include <tiffio.h>
 #include <vector>
-#include "glext.h"
 #include "vec3.h"
 
 class Texture

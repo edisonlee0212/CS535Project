@@ -1,7 +1,5 @@
 #pragma once
 
-
-#include "gui.h"
 #include "framebuffer.h"
 #include "Camera.h"
 #include "Mesh.h"
@@ -9,13 +7,14 @@
 #include <vector>
 
 
-
+#include <glfw3.h>
 #include "Cubemap.h"
 #include "Light.h"
 #include "Model.h"
 
 class Scene
 {
+public:
 	friend class Mesh;
 	static float _AmbientLight;
 	static vector<DirectionalLight> _DirectionalLights;
@@ -31,7 +30,6 @@ class Scene
 	static vector<Model*> _Models;
 	static Camera* _MainCamera;
 	static FrameBuffer* _FrameBuffer;
-	static GUI* _GUI;
 	static vec3 _ProjDir;
 	static int _ProjLimit;
 	static float _RollAngle;
@@ -44,19 +42,14 @@ class Scene
 	static bool _EnableTextureMapping;
 	static bool _EnableWireFrameMode;
 	static Cubemap _Skybox;
-public:
+	static GLFWwindow* _Window;
+
 	static ThreadPool* GetThreadPool();
-	Scene();
-	static void DBG();
-	static void NewButton();
-	static void Render();
 	static void RenderSkybox();
 	static void MainLoop();
 	static void RenderHW();
-	static void RenderGPU();
 	static void FixedUpdate();
 	static void Update();
 	static void LateUpdate();
 };
 
-extern Scene* scene;

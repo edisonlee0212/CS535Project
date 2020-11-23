@@ -2,13 +2,11 @@
 
 #include <mutex>
 #include <vector>
-#include <FL/Fl.H>
-#include <FL/Fl_Gl_Window.H>
 #include <GL/glut.h>
 #include "Texture.h"
 #include "Camera.h"
 
-class FrameBuffer : public Fl_Gl_Window
+class FrameBuffer
 {
 public:
 	vector<unsigned> Pixels; // pixel array
@@ -17,9 +15,7 @@ public:
 	int Width, Height;
 	bool EnableGPURendering = false;
 	FrameBuffer(int u0, int v0, int width, int height, unsigned int _id);
-	void draw() override;
 	void KeyboardHandle();
-	int handle(int event) override;
 	void SetBGR(unsigned int bgr);
 	void Set(int u, int v, unsigned int color)
 	{

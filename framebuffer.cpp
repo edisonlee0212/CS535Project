@@ -11,7 +11,7 @@
 using namespace std;
 
 FrameBuffer::FrameBuffer(int u0, int v0,
-                         int width, int height, unsigned int _id) : Fl_Gl_Window(u0, v0, width, height, nullptr)
+                         int width, int height, unsigned int _id)
 {
 	Resize(width, height);
 }
@@ -32,69 +32,10 @@ void FrameBuffer::ClearZBuffer()
 	memset(&ZBuffer[0], 0, ZBuffer.size() * sizeof(float));
 }
 
-void FrameBuffer::draw()
-{
-	if (!EnableGPURendering) {
-		glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
-	}else
-	{
-		glReadPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
-	}
-}
-
-int FrameBuffer::handle(int event)
-{
-	switch (event)
-	{
-	case FL_KEYBOARD:
-		{
-			KeyboardHandle();
-			return 0;
-		}
-	default:
-		break;
-	}
-	return 0;
-}
-
-void FrameBuffer::KeyboardHandle()
-{
-	int key = Fl::event_key();
-	cout << "Pressed: " << std::to_string(key) << endl;
-}
 
 void FrameBuffer::SetBGR(unsigned int bgr)
 {
 	memset(&Pixels[0], -1, Pixels.size() * sizeof(unsigned));
-}
-
-// load a tiff image to pixel buffer
-void FrameBuffer::LoadTiff(char* fileName)
-{
-	TIFF* in = TIFFOpen(fileName, "r");
-	if (in == nullptr)
-	{
-		cerr << fileName << " could not be opened" << endl;
-		return;
-	}
-
-	int width, height;
-	TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &width);
-	TIFFGetField(in, TIFFTAG_IMAGELENGTH, &height);
-	if (Width != width || Height != height)
-	{
-		Resize(width, height);
-		size(Width, Height);
-		glFlush();
-		glFlush();
-	}
-
-	if (TIFFReadRGBAImage(in, Width, Height, Pixels.data(), 0) == 0)
-	{
-		cerr << "failed to load " << fileName << endl;
-	}
-
-	TIFFClose(in);
 }
 
 // save as tiff image
