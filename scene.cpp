@@ -44,7 +44,7 @@ void main()
 {
 	int windowWidth = 1280;
 	int windowHeight = 720;
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	Scene::_Window = glfwCreateWindow(windowWidth, windowHeight, "Assignment 6", NULL, NULL);
 	if (!Scene::_Window) {

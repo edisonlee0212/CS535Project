@@ -29,8 +29,7 @@ void Texture::LoadTiff(std::string fileName)
 
 void Texture::UploadTexture()
 {
-	
-	glCreateTextures(GL_TEXTURE_2D, 1, &_ID);
+	glGenTextures(1, &_ID);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _ID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _Width, _Height, 0, GL_RGB_INTEGER, GL_UNSIGNED_INT, _Pixels.data());
