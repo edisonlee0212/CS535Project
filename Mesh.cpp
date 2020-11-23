@@ -35,7 +35,7 @@ void Mesh::RenderHW(std::shared_ptr<Material>& material, bool enableTextureMappi
 	if (textureMapping)
 	{
 		glEnable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE0);
+		//glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material->GetTexture()->ID());
 	}
 	glEnableClientState(GL_VERTEX_ARRAY);
