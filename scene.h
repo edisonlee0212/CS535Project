@@ -41,6 +41,8 @@ class Scene
 	static float _LastTimeStep;
 	static float _CurrentTime;
 	static float _DeltaTime;
+	static bool _EnableTextureMapping;
+	static bool _EnableWireFrameMode;
 	static Cubemap _Skybox;
 public:
 	static ThreadPool* GetThreadPool();
@@ -50,7 +52,8 @@ public:
 	static void Render();
 	static void RenderSkybox();
 	static void MainLoop();
-
+	static void RenderHW();
+	static void RenderGPU();
 	static void FixedUpdate();
 	static void Update();
 	static void LateUpdate();

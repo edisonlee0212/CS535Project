@@ -125,3 +125,30 @@ void Camera::Roll(float theta)
 	Up = Up.RotateVector(GetFront(), theta);
 	c = c.RotateVector(GetFront(), theta);
 }
+
+void Camera::SetIntrinsicsHW()
+{
+	glViewport(0, 0, Width, Height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	float f = GetF();
+	float hither = 0.25f;
+	float yon = 1000.0f;
+	float scalef = hither / f;
+	float wf = Left.Length() * Width;
+	float hf = Up.Length() * Height;
+	glFrustum(-wf / 2.0f * scalef, wf / 2.0f * scalef, -hf / 2.0f * scalef,
+		hf / 2.0f * scalef, hither, yon);
+	glMatrixMode(GL_MODELVIEW); // default matrix mode
+}
+
+void Camera::SetExtrinsicsHW()
+{
+	vec3 eye = Center;
+	vec3 look = Center + (Left ^ Up) * 100.0f;
+	vec3 down = Up.Normalized();
+	glLoadIdentity();
+	gluLookAt(eye[0], eye[1], eye[2],
+		look[0], look[1], look[2],
+		-down[0], -down[1], -down[2]);
+}

@@ -8,6 +8,7 @@
 #include "Bounds.h"
 #include "framebuffer.h"
 #include "Light.h"
+
 class Material;
 
 enum FillMode
@@ -38,13 +39,11 @@ class Mesh
 	inline void RasterizationHelper(int i, FrameBuffer* fb, vector<vec3>& proj, Camera* camera, FillMode mode, std::mutex& writeMutex, Material* material, bool calculateLighting) const;
 public:
 	bool Enabled;
-	bool HasColors;
-	bool HasNormals;
-	bool HasTexCoords;
-	Mesh() : _VertsN(0), _TrisN(0), Enabled(true)
-	{
-	}
-
+	bool HasColors = false;
+	bool HasNormals = false;
+	bool HasTexCoords = false;
+	Mesh() : _VertsN(0), _TrisN(0), Enabled(true) {}
+	void RenderHW(std::shared_ptr<Material>& material, bool enableTextureMapping);
 	void RecalculateBoundingBox();
 	void RecalculateNormals();
 	void SetToCube(vec3 cc, float sideLength, unsigned int color0, unsigned int color1);

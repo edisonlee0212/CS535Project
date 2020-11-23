@@ -41,5 +41,9 @@ public:
 	{
 		_Mesh.DrawFilled(fb, camera, _DefaultFillMode, _Material.get(), _ReceiveLight);
 	}
+	void DrawHW(bool enableTextureMapping)
+	{
+		_Mesh.RenderHW(_Material, enableTextureMapping);
+	}
 };
 

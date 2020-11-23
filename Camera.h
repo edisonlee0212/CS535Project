@@ -20,5 +20,10 @@ public:
 	void Pan(float theta);
 	void Tilt(float theta);
 	void Roll(float theta);
-
+	float GetF()
+	{
+		return c * (Left ^ Up).Normalized();
+	}
+	void SetIntrinsicsHW();
+	void SetExtrinsicsHW();
 };

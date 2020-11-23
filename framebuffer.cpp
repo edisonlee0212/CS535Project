@@ -34,7 +34,12 @@ void FrameBuffer::ClearZBuffer()
 
 void FrameBuffer::draw()
 {
-	glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
+	if (!EnableGPURendering) {
+		glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
+	}else
+	{
+		glReadPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pixels.data());
+	}
 }
 
 int FrameBuffer::handle(int event)

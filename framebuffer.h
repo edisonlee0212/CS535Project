@@ -15,6 +15,7 @@ public:
 	vector<float> ZBuffer;
 	vector<mutex> ZBufferLocks;
 	int Width, Height;
+	bool EnableGPURendering = false;
 	FrameBuffer(int u0, int v0, int width, int height, unsigned int _id);
 	void draw() override;
 	void KeyboardHandle();

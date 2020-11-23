@@ -6,7 +6,7 @@
 #include "mat3.h"
 #include "Camera.h"
 #include "Mesh.h"
-#define A5
+#define A6
 #pragma region Static var decl
 float  Scene::_RollAngle = 0;
 float  Scene::_VerticalAngle = 0;
@@ -36,11 +36,14 @@ int Scene::_ProjLimit;
 Camera* Scene::_ProjCamera;
 FrameBuffer* Scene::_ProjBuffer;
 Texture* Scene::_ProjTexture;
+bool Scene::_EnableWireFrameMode = false;
+bool Scene::_EnableTextureMapping = true;
 #pragma endregion
 using namespace std;
 
 Scene::Scene()
 {
+	Fl::gl_visual(FL_RGB);
 	_GUI = new GUI();
 	_GUI->show();
 	_ThreadPool.Resize(std::thread::hardware_concurrency());
@@ -75,18 +78,83 @@ Scene::Scene()
 
 	_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0), vec3(0.0f, 1.0f, 0.0f));
 
-#ifdef A5
-	_Skybox.LoadTiffs("Resources/Skyboxes/PX.tiff", "Resources/Skyboxes/NX.tiff", "Resources/Skyboxes/PY.tiff", "Resources/Skyboxes/NY.tiff", "Resources/Skyboxes/PZ.tiff", "Resources/Skyboxes/NZ.tiff");
+#ifdef A6
+	
+	
+	_FrameBuffer->EnableGPURendering = true;
+	auto windowmat = std::make_shared<Material>();
+	windowmat->SetShininess(4.0f);
+	windowmat->LoadTextureFromTiff("Resources/border.tif");
+	windowmat->GetTexture()->SetTransparencyRange(25, 75, 25, 75, true);
 
-	auto orangeMat = std::make_shared<Material>();
-	orangeMat->SetShininess(4.0f);
-	orangeMat->LoadTextureFromTiff("Resources/orange.tif");
-	auto teapotC = new Model(orangeMat, true, true);
-	teapotC->GetMesh().LoadBin("Resources/geometry/teapot1K.bin");
-	teapotC->SetCenter(vec3(0.0f, 0.0f, 0.0f));
-	teapotC->SetScale(vec3(0.2f));
-	_Models.push_back(teapotC);
+	auto orangemat = std::make_shared<Material>();
+	orangemat->SetShininess(4.0f);
+	orangemat->LoadTextureFromTiff("Resources/orange.tif");
+
+	auto bordermat = std::make_shared<Material>();
+	bordermat->SetShininess(4.0f);
+	bordermat->LoadTextureFromTiff("Resources/border.tif");
+
+	auto uvmat = std::make_shared<Material>();
+	uvmat->LoadTextureFromTiff("Resources/uv-test.tif");
+
+	auto viewmat = std::make_shared<Material>();
+	viewmat->LoadTextureFromTiff("Resources/view.tif");
+
+	auto catmat = std::make_shared<Material>();
+	catmat->LoadTextureFromTiff("Resources/cat.tif");
+
+	auto treemat = std::make_shared<Material>();
+	treemat->LoadTextureFromTiff("Resources/tree.tif");
+
+	auto gimat = std::make_shared<Material>();
+	gimat->LoadTextureFromTiff("Resources/GI.tif");
+
+	auto teapot1k = new Model(orangemat, true, true);
+	teapot1k->GetMesh().LoadBin("Resources/geometry/teapot1K.bin");
+	teapot1k->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	teapot1k->SetScale(vec3(1.0, 1.0, 1.0));
+
+	auto quad2 = new Model(catmat);
+	quad2->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad2->SetCenter(vec3(0.0f, 60.0f, 0.0f));
+	quad2->SetScale(vec3(9.0, 9.0, 9.0));
+
+	auto quad3 = new Model(treemat);
+	quad3->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad3->SetCenter(vec3(-60.0f, 0.0f, 0.0f));
+	quad3->SetScale(vec3(9.0, 9.0, 9.0));
+
+	auto quad4 = new Model(uvmat);
+	quad4->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad4->SetCenter(vec3(0.0f, -60.0f, 0.0f));
+	quad4->SetScale(vec3(9.0, 9.0, 9.0));
+
+	auto quad5 = new Model(gimat);
+	quad5->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad5->SetCenter(vec3(60.0f, 60.0f, 0.0f));
+	quad5->SetScale(vec3(9.0f, 9.0f, 9.0f));
+
+
+	auto quad6 = new Model(viewmat);
+	quad6->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor());
+	quad6->SetCenter(vec3(-60.0f, 60.0f, 0.0f));
+	quad6->SetScale(vec3(9.0f, 9.0f, 9.0f));
+
+	auto quad7 = new Model(viewmat);
+	quad7->GetMesh().SetToQuad(vec3(0, 0, 0), 5, vec3(128, 0, 128).GetColor(), vec3(128, 128, 0).GetColor(), 3.0f);
+	quad7->SetCenter(vec3(-60.0f, -60.0f, 0.0f));
+	quad7->SetScale(vec3(9.0f, 9.0f, 9.0f));
+
+	_Models.push_back(teapot1k);
+	_Models.push_back(quad2);
+	_Models.push_back(quad3);
+	_Models.push_back(quad4);
+	_Models.push_back(quad5);
+	_Models.push_back(quad6);
+	_Models.push_back(quad7);
 #endif
+
 
 #pragma region Previous Assignments
 #ifdef A2
@@ -444,6 +512,18 @@ Scene::Scene()
 	_Models.push_back(audi);
 
 #endif
+#ifdef A5
+	_Skybox.LoadTiffs("Resources/Skyboxes/PX.tiff", "Resources/Skyboxes/NX.tiff", "Resources/Skyboxes/PY.tiff", "Resources/Skyboxes/NY.tiff", "Resources/Skyboxes/PZ.tiff", "Resources/Skyboxes/NZ.tiff");
+
+	auto orangeMat = std::make_shared<Material>();
+	orangeMat->SetShininess(4.0f);
+	orangeMat->LoadTextureFromTiff("Resources/orange.tif");
+	auto teapotC = new Model(orangeMat, true, true);
+	teapotC->GetMesh().LoadBin("Resources/geometry/teapot1K.bin");
+	teapotC->SetCenter(vec3(0.0f, 0.0f, 0.0f));
+	teapotC->SetScale(vec3(0.2f));
+	_Models.push_back(teapotC);
+#endif
 #pragma endregion
 	MainLoop();
 }
@@ -452,15 +532,7 @@ void Scene::Render()
 {
 	_FrameBuffer->SetBGR(0xFFFFFFFF);
 	_FrameBuffer->ClearZBuffer();
-#ifdef A5
-	for (const auto& model : _Models)
-	{
-		if (!model->Enabled)
-			continue;
-		model->Draw(_FrameBuffer, _MainCamera, FillMode::_FillMode_Environment_Reflection);
-	}
-	RenderSkybox();
-#endif
+
 #pragma region Previous Assignments
 #ifdef A2
 	for (const auto& mesh : _Meshes)
@@ -535,6 +607,15 @@ void Scene::Render()
 		model->Draw(_FrameBuffer, _MainCamera);
 	}
 #endif
+#ifdef A5
+	for (const auto& model : _Models)
+	{
+		if (!model->Enabled)
+			continue;
+		model->Draw(_FrameBuffer, _MainCamera, FillMode::_FillMode_Environment_Reflection);
+	}
+	RenderSkybox();
+#endif
 #pragma endregion
 	_FrameBuffer->redraw();
 }
@@ -586,13 +667,38 @@ void Scene::MainLoop()
 			FixedUpdate();
 		}
 		LateUpdate();
+#ifndef A6
 		Render();
+#else
+		RenderHW();
+#endif
 	}
+}
+
+void Scene::RenderHW()
+{
+	// initializations (could be done once per session)
+	glEnable(GL_DEPTH_TEST);
+	if(_EnableWireFrameMode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// clear buffers
+	glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+	// set the view desired by the application (the user)
+	_MainCamera->SetIntrinsicsHW();
+	_MainCamera->SetExtrinsicsHW();
+
+	// draw the actual geometry
+	for(auto* model : _Models)
+	{
+		model->DrawHW(_EnableTextureMapping);
+	}
+	_FrameBuffer->redraw();
 }
 
 void Scene::FixedUpdate()
 {
-
 #pragma region Previous Assignments
 #ifdef A2
 	_Meshes[1]->Rotate(_Meshes[1]->GetCenter(), vec3(1.0f, 1.0f, 0.0f), 2.0f);
@@ -629,44 +735,24 @@ void Scene::FixedUpdate()
 
 void Scene::Update()
 {
-#ifdef A5
-	const float speed = 1.0f;
-	if (Fl::event_key(FL_Up)) {
-		_VerticalAngle -= _DeltaTime * speed;
-		if (_VerticalAngle < -88.0f) _VerticalAngle = -88.0f;
-	}
-	if (Fl::event_key(FL_Down)) {
-		_VerticalAngle += _DeltaTime * speed;
-		if(_VerticalAngle > 88.0f) _VerticalAngle = 88.0f;
-	}
-	if (Fl::event_key(FL_Left)) {
-		_HorizontalAngle += _DeltaTime * speed;
-	}
-	if (Fl::event_key(FL_Right)) {
-		_HorizontalAngle -= _DeltaTime * speed;
-	}
-	if (Fl::event_key(FL_Shift_R)) {
-		_RollAngle += _DeltaTime * speed * 50;
-	}
-	if (Fl::event_key(FL_Control_R)) {
-		_RollAngle -= _DeltaTime * speed * 50;
-	}
-	if (Fl::event_key(FL_Shift_L)) {
-		_Distance -= _DeltaTime * speed * 10;
-		if (_Distance < 10.0f) _Distance = 10.0f;
-	}
-	if (Fl::event_key(FL_Control_L)) {
-		_Distance += _DeltaTime * speed * 10;
-		if (_Distance > 75.0f) _Distance = 75.0f;
+#ifdef A6
+	int i = 0;
+	for (auto* model : _Models)
+	{
+		i++;
+		if (i % 8 == 0) i++;
+		model->GetMesh().Rotate(model->GetMesh().GetCenter(), vec3(i % 8 > 0 ? 1 : 0, i % 4 > 0 ? 1 : 0, i % 2 > 0 ? 1 : 0), _DeltaTime * 10.0f);
 	}
 	
-	vec3 viewDir = vec3(
-		sin(_HorizontalAngle) * cos(_VerticalAngle),
-		sin(_VerticalAngle),
-		cos(_HorizontalAngle) * cos(_VerticalAngle)
-	);
-	vec3 up = vec3(0.0f, 1.0f, 0.0f).RotateVector(viewDir, _RollAngle);
-	_MainCamera->SetPose(viewDir.Normalized() * _Distance, vec3(0), up);
+	vec3 target = vec3(0.0f, 0.0f, 0.0f);
+	vec3 center = vec3(200.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
+	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
+	if (Fl::event_key(FL_Shift_L)) {
+		_EnableWireFrameMode = true;
+	}else if(Fl::event_key(FL_Control_L))
+	{
+		_EnableWireFrameMode = false;
+	}
 #endif
 #pragma region Previous Assignments
 #ifdef A2
@@ -752,6 +838,45 @@ void Scene::Update()
 	}
 	_ProjCamera->SetPose(_ProjPos, _ProjPos + _ProjDir, vec3(0, 0, 1));
 	_MainCamera->SetPose(_CameraPos, _CameraPos + _CameraDir, vec3(0.0f, 1.0f, 0.0f));
+#endif
+#ifdef A5
+	const float speed = 1.0f;
+	if (Fl::event_key(FL_Up)) {
+		_VerticalAngle -= _DeltaTime * speed;
+		if (_VerticalAngle < -88.0f) _VerticalAngle = -88.0f;
+	}
+	if (Fl::event_key(FL_Down)) {
+		_VerticalAngle += _DeltaTime * speed;
+		if (_VerticalAngle > 88.0f) _VerticalAngle = 88.0f;
+	}
+	if (Fl::event_key(FL_Left)) {
+		_HorizontalAngle += _DeltaTime * speed;
+	}
+	if (Fl::event_key(FL_Right)) {
+		_HorizontalAngle -= _DeltaTime * speed;
+	}
+	if (Fl::event_key(FL_Shift_R)) {
+		_RollAngle += _DeltaTime * speed * 50;
+	}
+	if (Fl::event_key(FL_Control_R)) {
+		_RollAngle -= _DeltaTime * speed * 50;
+	}
+	if (Fl::event_key(FL_Shift_L)) {
+		_Distance -= _DeltaTime * speed * 10;
+		if (_Distance < 10.0f) _Distance = 10.0f;
+	}
+	if (Fl::event_key(FL_Control_L)) {
+		_Distance += _DeltaTime * speed * 10;
+		if (_Distance > 75.0f) _Distance = 75.0f;
+	}
+
+	vec3 viewDir = vec3(
+		sin(_HorizontalAngle) * cos(_VerticalAngle),
+		sin(_VerticalAngle),
+		cos(_HorizontalAngle) * cos(_VerticalAngle)
+	);
+	vec3 up = vec3(0.0f, 1.0f, 0.0f).RotateVector(viewDir, _RollAngle);
+	_MainCamera->SetPose(viewDir.Normalized() * _Distance, vec3(0), up);
 #endif
 #pragma endregion
 }

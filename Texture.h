@@ -2,8 +2,7 @@
 #include <iostream>
 #include <tiffio.h>
 #include <vector>
-
-#include <stb_image.h>
+#include "glext.h"
 #include "vec3.h"
 
 class Texture
@@ -11,7 +10,12 @@ class Texture
 	vector<unsigned> _Pixels; // pixel array
 	vector<bool> _Transparency;
 	int _Width, _Height;
+	
 public:
+	bool Loaded = false;
+	GLuint _ID = 0;
+	bool NeedUpload = false;
+	GLuint ID() const { return _ID; }
 	int GetWidth() const
 	{
 		return _Width;
@@ -24,22 +28,18 @@ public:
 	{
 		Resize(0, 0);
 	}
-
 	unsigned Get(int u, int v)
 	{
 		return _Pixels[(_Height - v - 1) * _Width + u];
 	}
-
 	void SetAllTransparency(bool value)
 	{
 		for (auto& i : _Transparency) i = value;
 	}
-
 	void SetTransparency(int u, int v, bool value)
 	{
 		_Transparency[(_Height - v - 1) * _Width + u] = value;
 	}
-
 	void SetTransparencyRange(int u1, int u2, int v1, int v2, bool value)
 	{
 		for(int u = u1; u < u2; u++)
@@ -50,7 +50,6 @@ public:
 			}
 		}
 	}
-	
 	Texture(int width, int height)
 	{
 		Resize(width, height);
@@ -62,31 +61,7 @@ public:
 		_Pixels.resize(_Width * _Height);
 		_Transparency.resize(_Width * _Height);
 	}
-	void LoadTiff(std::string fileName)
-	{
-		TIFF* in = TIFFOpen(fileName.c_str(), "r");
-		if (in == nullptr)
-		{
-			cerr << fileName << " could not be opened" << endl;
-			return;
-		}
-
-		int width, height;
-		TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &width);
-		TIFFGetField(in, TIFFTAG_IMAGELENGTH, &height);
-		if (_Width != width || _Height != height)
-		{
-			Resize(width, height);
-		}
-
-		if (TIFFReadRGBAImage(in, _Width, _Height, _Pixels.data(), 0) == 0)
-		{
-			cerr << "failed to load " << fileName << endl;
-		}
-
-		TIFFClose(in);
-		SetAllTransparency(false);
-	}
+	void LoadTiff(std::string fileName);
 	void SaveAsTiff(std::string fileName) const
 	{
 		TIFF* out = TIFFOpen(fileName.c_str(), "w");
@@ -157,8 +132,7 @@ public:
 	unsigned Trilinear(float x, float y, float z)
 	{
 		return 0.0f;
-	}
-	
+	}	
 	bool IsTransparent(float x, float y)
 	{
 		int nearX = static_cast<int>(x * _Width);
@@ -174,5 +148,7 @@ public:
 	{
 		return _Transparency[(_Height - y - 1) * _Width + x];
 	}
+
+	void UploadTexture();
 };
 
