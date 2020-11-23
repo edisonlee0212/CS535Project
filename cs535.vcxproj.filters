@@ -105,14 +105,4 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="gui.fl">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="CG\shaderOne.cg">
-      <Filter>Resource Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>

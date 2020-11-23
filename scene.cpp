@@ -51,9 +51,9 @@ void main()
 		std::cout << "Window Creation Failed" << std::endl;
 	}
 	glfwMakeContextCurrent(Scene::_Window);
-	if (glewInit() != GLEW_OK)
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		std::cout << "GLEW initialization failed.\n";
+		exit(-1);
 	}
 	
 	Scene::_ThreadPool.Resize(std::thread::hardware_concurrency());
