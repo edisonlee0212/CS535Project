@@ -148,7 +148,7 @@ void Camera::SetExtrinsicsHW()
 	vec3 look = Center + (Left ^ Up) * 100.0f;
 	vec3 down = Up.Normalized();
 	glLoadIdentity();
-	gluLookAt(eye[0], eye[1], eye[2],
-		look[0], look[1], look[2],
-		-down[0], -down[1], -down[2]);
+	//glMultMatrixf(M);
+	glTranslated(-eye[0], -eye[1], -eye[2]);
+	
 }

@@ -33,10 +33,6 @@ void Mesh::RenderHW(std::shared_ptr<Material>& material, bool enableTextureMappi
 		// bind texture handle for the texture to be used
 	if (enableTextureMapping && material->GetTexture()->Loaded)
 	{
-		if(material->GetTexture()->NeedUpload)
-		{
-			material->GetTexture()->UploadTexture();
-		}
 		glEnable(GL_TEXTURE_2D);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material->GetTexture()->ID());

@@ -44,9 +44,10 @@ void main()
 {
 	int windowWidth = 1280;
 	int windowHeight = 720;
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-	Scene::_Window = glfwCreateWindow(windowWidth, windowHeight, "Assignment 6", NULL, NULL);
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	Scene::_Window = glfwCreateWindow(windowWidth, windowHeight, "Assignment6", NULL, NULL);
 	if (!Scene::_Window) {
 		std::cout << "Window Creation Failed" << std::endl;
 	}
@@ -63,7 +64,7 @@ void main()
 	float fov = 60.0f;
 	Scene::_FrameBuffer = new FrameBuffer(windowPosX, windowPosY, windowWidth, windowHeight, 0);
 	Scene::_MainCamera = new Camera(fov, Scene::_FrameBuffer->Width, Scene::_FrameBuffer->Height);
-	Scene::_MainCamera->SetPose(vec3(20.0f, 80.0f, 80.0f), vec3(0), vec3(0.0f, 1.0f, 0.0f));
+	Scene::_MainCamera->SetPose(vec3(0.0f, 0.0f, 200.0f), vec3(0), vec3(0.0f, 1.0f, 0.0f));
 	Scene::_FrameBuffer->EnableGPURendering = true;
 	auto windowmat = std::make_shared<Material>();
 	windowmat->SetShininess(4.0f);
@@ -231,7 +232,7 @@ void Scene::Update()
 	
 	vec3 target = vec3(0.0f, 0.0f, 0.0f);
 	vec3 center = vec3(200.0f * sin(_CurrentTime / 5.0f * 3.1415926f), 0.0f, 200.0f * cos(_CurrentTime / 5.0f * 3.1415926f));
-	_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
+	//_MainCamera->SetPose(center, target, vec3(0.0f, 1.0f, 0.0f));
 	if (glfwGetKey(_Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		_EnableWireFrameMode = true;
 	}else if(glfwGetKey(_Window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)

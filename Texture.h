@@ -147,7 +147,5 @@ public:
 	{
 		return _Transparency[(_Height - y - 1) * _Width + x];
 	}
-
-	void UploadTexture();
 };
 
